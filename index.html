@@ -138,10 +138,13 @@
   body.wheel .wl { color:var(--w-fg); font-weight:600; letter-spacing:.04em; }
   body.wheel .wl.hot { color:#fff; }
   body.wheel .wc { background:var(--w-seg); color:var(--w-fg); border:1px solid var(--w-border); box-shadow:none; }
-  body.editor .backdrop { background:transparent; backdrop-filter:none; padding:0; }
-  body.editor .modal { width:100%; height:100vh; max-height:100vh; animation:none; }
-  body.editor .mhead { -webkit-app-region:drag; }
-  body.editor .mhead button { -webkit-app-region:no-drag; }
+  body.editor .backdrop, body.help .backdrop { background:transparent; backdrop-filter:none; padding:0; }
+  body.editor .modal, body.help .modal { width:100%; height:100vh; max-height:100vh; animation:none; }
+  body.editor .mhead, body.help .mhead { -webkit-app-region:drag; }
+  body.editor .mhead button, body.help .mhead button { -webkit-app-region:no-drag; }
+  .helpok { display:flex; align-items:center; gap:8px; font-weight:600; color:#15803d; margin:4px 0 12px; }
+  .helpok i { width:9px; height:9px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.2); }
+  .steps { margin:0; padding-left:20px; font-size:13px; line-height:1.9; user-select:text; }
 </style>
 </head>
 <body>
@@ -1012,6 +1015,21 @@ if (DESKTOP_MODE === 'wheel') {
     }
   });
 }
+
+if (DESKTOP_MODE === 'help') (async () => {
+  const m = openModal('Drag + Shift', { primary: 'Tamam', reset: false });
+  m.body.append(
+    h('div', { class: 'helpok' }, h('i'), 'Arka planda çalışıyor'),
+    h('ol', { class: 'steps' },
+      h('li', {}, 'Masaüstünde ya da Explorer\'da bir dosyayı tut ve sürükle.'),
+      h('li', {}, 'Sürüklerken ', h('kbd', {}, 'Shift'), '\'e bas — imlecin altında çark açılır.'),
+      h('li', {}, 'Dosyayı bir işlemin üstüne bırak; sonuç dosyanın yanına kaydedilir.'),
+      h('li', {}, 'Görsellerde tekrar ', h('kbd', {}, 'Shift'), ' = Convert çarkı. ', h('kbd', {}, 'Esc'), ' = kapat.')),
+    h('div', { class: 'note' }, 'Bu pencereyi kapatabilirsin; uygulama saatin yanındaki turuncu noktada çalışmaya devam eder.'));
+  m.onSave = async () => null;
+  await m.result;
+  window.desktop.close();
+})();
 
 if (DESKTOP_MODE === 'editor') (async () => {
   const D = window.desktop, q = new URLSearchParams(location.search), path = q.get('file'), tool = q.get('tool');

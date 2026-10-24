@@ -19,13 +19,17 @@ const WHEEL = 460; // wheel is 372px; the margin leaves room for its shadow
 let wheelWin, tray;
 let shown = false;
 
-if (!app.requestSingleInstanceLock()) app.quit();
-
 const log = (...a) => {
   try { fs.appendFileSync(path.join(app.getPath('userData'), 'debug.log'), new Date().toISOString() + ' ' + a.join(' ') + '\n'); } catch {}
 };
 process.on('uncaughtException', e => log('ERROR', e.stack));
 process.on('unhandledRejection', e => log('ERROR', e?.stack || e));
+
+// Started by Windows at login → stay silent; started by the user → say hello.
+const AT_LOGIN = process.argv.includes('--hidden');
+if (!app.requestSingleInstanceLock()) { app.quit(); return; }
+log('starting', AT_LOGIN ? '(login)' : '(manual)');
+app.on('second-instance', () => showHelp());
 
 function createWheel() {
   wheelWin = new BrowserWindow({
@@ -65,16 +69,16 @@ function startWatching() {
   setInterval(() => {
     const m = leftHeld(), s = isDown(VK.SHIFT), e = isDown(VK.ESCAPE);
     if (m && !mouse) { downAt = screen.getCursorScreenPoint(); dragging = false; }
+    const wasDragging = dragging;
     if (m && !dragging && downAt) {
       const p = screen.getCursorScreenPoint();
-      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) dragging = true;
+      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, shift=' + s); }
     }
     if (!m) dragging = false;
-    // Shift pressed while already dragging (not held before the drag began)
-    if (s && !shift && m && dragging) {
-      log('shift during drag, shown=' + shown);
-      if (!shown) showWheel(); else wheelWin.webContents.send('wheel:cycle');
-    }
+    // Open when Shift is pressed during a drag, or a drag starts with Shift already held;
+    // another Shift press while open switches the wheel.
+    if (m && dragging && s && !shown && (!shift || !wasDragging)) { log('open wheel'); showWheel(); }
+    else if (s && !shift && shown) wheelWin.webContents.send('wheel:cycle');
     if (e && !esc) hideWheel();
     mouse = m; shift = s; esc = e;
   }, 30);
@@ -87,6 +91,17 @@ function openEditor(file, tool) {
     title: 'Drag + Shift', webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
   win.loadFile('index.html', { query: { mode: 'editor', file, tool } });
+}
+
+let helpWin;
+function showHelp() {
+  if (helpWin && !helpWin.isDestroyed()) { helpWin.show(); helpWin.focus(); return; }
+  const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+  helpWin = new BrowserWindow({
+    width: 440, height: 420, frame: false, transparent: true, resizable: false, alwaysOnTop: true,
+    title: 'Drag + Shift', webPreferences: { preload: path.join(__dirname, 'preload.js') },
+  });
+  helpWin.loadFile('index.html', { query: { mode: 'help', theme } });
 }
 
 function uniquePath(dir, name) {
@@ -124,10 +139,10 @@ function trayIcon() {
 
 app.whenReady().then(() => {
   app.setAppUserModelId('app.dragshift');
-  // Start with Windows by default; the tray menu can turn it off.
+  // Start with Windows by default (silently, via --hidden); the tray menu can turn it off.
   const firstRun = path.join(app.getPath('userData'), '.installed');
-  if (app.isPackaged && !fs.existsSync(firstRun)) {
-    app.setLoginItemSettings({ openAtLogin: true });
+  if (app.isPackaged && (!fs.existsSync(firstRun) || app.getLoginItemSettings().openAtLogin)) {
+    app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] });
     fs.writeFileSync(firstRun, '');
   }
   createWheel();
@@ -143,11 +158,14 @@ app.whenReady().then(() => {
   tray.setToolTip('Drag + Shift — dosya sürüklerken Shift\'e bas');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Drag + Shift açık', enabled: false },
-    { label: 'Windows ile başlat', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin,
-      click: i => app.setLoginItemSettings({ openAtLogin: i.checked }) },
+    { label: 'Nasıl kullanılır?', click: showHelp },
+    { label: 'Windows ile başlat', type: 'checkbox', checked: app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin,
+      click: i => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--hidden'] }) },
     { type: 'separator' },
     { label: 'Kapat', click: () => app.quit() },
   ]));
+  tray.on('click', showHelp);
+  if (!AT_LOGIN && !process.env.DS_PREVIEW) showHelp();
 });
 
 app.on('window-all-closed', () => { /* keep running in the background */ });

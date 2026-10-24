@@ -1,0 +1,29 @@
+name: Release
+
+# Push a tag like v1.0.1 → builds the Windows installer and attaches it to the release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx electron-builder --win nsis --publish never
+      - name: Upload installer to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          exe=$(ls dist/*.exe | grep -v __uninstaller | head -1)
+          cp "$exe" "dist/DragShift-Setup-${GITHUB_REF_NAME#v}.exe"
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Drag + Shift ${GITHUB_REF_NAME#v}" --notes "Kurulum dosyasını indirip çalıştır."
+          gh release upload "$GITHUB_REF_NAME" "dist/DragShift-Setup-${GITHUB_REF_NAME#v}.exe" --clobber

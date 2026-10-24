@@ -8,6 +8,7 @@
 <script src="node_modules/pdfjs-dist/build/pdf.worker.min.js"></script>
 <script src="node_modules/jspdf/dist/jspdf.umd.min.js"></script>
 <script src="node_modules/jszip/dist/jszip.min.js"></script>
+<script src="node_modules/pdf-lib/dist/pdf-lib.min.js"></script>
 <style>
   :root { --accent:#ee5320; --ink:#3d2418; --muted:#8a6a58; }
   * { box-sizing:border-box; }
@@ -147,6 +148,8 @@
   body.editor .stagecol .preview { flex:1; margin:0; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   body.editor .preview canvas, body.editor .preview > img { max-width:100%; max-height:100%; }
   body.editor .sidecol { width:330px; flex:none; overflow:auto; padding-right:2px; }
+  body.editor .stagecol:empty { display:none; }
+  body.editor .stagecol:empty + .sidecol { width:auto; flex:1; }
   body.editor .sidecol .row > label { width:100px; }
   .helpok { display:flex; align-items:center; gap:8px; font-weight:600; color:#15803d; margin:4px 0 12px; }
   .helpok i { width:9px; height:9px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.2); }
@@ -178,12 +181,19 @@ const I18N = {
     Ratio: 'Oran', Brightness: 'Parlaklık', Contrast: 'Kontrast', Saturation: 'Doygunluk', Hue: 'Ton', Grayscale: 'Gri ton',
     Sepia: 'Sepya', Blur: 'Bulanıklık', Free: 'Serbest', Auto: 'Otomatik', Black: 'Siyah', Pixelate: 'Pikselleştir',
     Pen: 'Kalem', Highlight: 'Vurgu', Arrow: 'Ok', Box: 'Kutu',
+    EXTENSION: 'UZANTI', COPY: 'KOPYA', MORE: 'DAHA FAZLA', 'PDF TOOLS': 'PDF ARAÇLARI', SPLIT: 'AYIR', CLEAN: 'TEMİZLE',
+    MERGE: 'BİRLEŞTİR', EXTRACT: 'ÇIKAR', CONTENTS: 'İÇERİK', OPTIMIZE: 'OPTİMİZE', RESIZE: 'BOYUTLANDIR', FLIP: 'ÇEVİR',
+    'B&W': 'SİYAH-BEYAZ', 'Change Extension': 'Uzantıyı Değiştir', 'New extension': 'Yeni uzantı', Resize: 'Boyutlandır',
+    Scale: 'Ölçek', Width: 'Genişlik', Height: 'Yükseklik', 'Keep ratio': 'Oranı koru', Copy: 'Kopyala', pages: 'sayfalar',
   },
   en: {
     'bırak': 'drop', Kapat: 'Close', Kaydet: 'Save', Tamam: 'OK', Boyut: 'Size', Stil: 'Style', Araç: 'Tool', Renk: 'Colour',
     Kalınlık: 'Thickness', Kalite: 'Quality', 'Maks. kenar': 'Max. edge', Orijinal: 'Original',
     'Gizlemek istediğin alanların üstüne kutu çiz.': 'Draw boxes over the areas you want to hide.',
     'Arka planda çalışıyor': 'Running in the background',
+    Ad: 'Name', Kopya: 'Copy', Arşiv: 'Archive', Birleştirilmiş: 'Merged', içerik: 'contents', dosya: 'files', 'ZIP boş': 'The ZIP is empty',
+    'Birleştirmek için birden fazla PDF bırak.': 'Drop more than one PDF to merge.', 'Geçersiz uzantı': 'Invalid extension',
+    'Dosyanın içeriği değişmez; sadece adı değişir.': 'The file content stays the same; only its name changes.',
   },
 };
 const t = s => I18N[LANG]?.[s] ?? s;
@@ -212,6 +222,18 @@ const ICON = {
   eyeoff: '<path d="M9.9 4.2A10 10 0 0 1 12 4c7 0 10 8 10 8a13 13 0 0 1-1.7 2.7M6.6 6.6A13 13 0 0 0 2 12s3 8 10 8a9.7 9.7 0 0 0 5.4-1.6"/><path d="M2 2l20 20"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   zip: '<path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/>',
   download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  rename: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+  hash: '<path d="M5 9h14M5 15h14M10 3L8 21M16 3l-2 18"/>',
+  code: '<path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/>',
+  scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/>',
+  eraser: '<path d="M20 20H8l-5-5 10-10 7 7-6 6"/>',
+  merge: '<path d="M8 3v5a4 4 0 0 0 4 4 4 4 0 0 1 4 4v5M16 3v5a4 4 0 0 1-4 4"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  resize: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
+  flip: '<path d="M12 3v18"/><path d="M8 7l-5 5 5 5zM16 7l5 5-5 5z"/>',
+  gray: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>',
 };
 const svgIcon = name => `<svg class="i" viewBox="0 0 24 24">${ICON[name]}</svg>`;
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
@@ -235,6 +257,7 @@ const keepType = f => IMG_EXT[f.blob.type] ? f.blob.type : 'image/png';
 const named = (f, suffix, type) => `${baseName(f.name)} ${suffix}.${IMG_EXT[type]}`;
 function kindOf(type, name = '') {
   if (type === 'application/pdf' || /\.pdf$/i.test(name)) return 'pdf';
+  if (/zip/.test(type) || /\.zip$/i.test(name)) return 'zip';
   if (/^image\/(png|jpe?g|webp|gif|bmp|avif|svg\+xml)$/.test(type) || /\.(png|jpe?g|webp|gif|bmp|avif|svg)$/i.test(name)) return 'image';
   if (type.startsWith('text/') || /\.(txt|md|csv|json|log|xml|html?)$/i.test(name)) return 'text';
   return 'other';
@@ -308,18 +331,35 @@ document.getElementById('add').onclick = () => document.getElementById('picker')
 document.getElementById('picker').onchange = e => { [...e.target.files].forEach(file => addFile(file, file.name)); e.target.value = ''; };
 
 // ---------- radial wheel
+// Every kind ends with the FILE ring; Shift switches rings while dragging.
+const FILE_RING = { title: 'FILE', items: [
+  { id: 'ext', label: 'EXTENSION', icon: 'rename' }, { id: 'zip', label: 'ZIP', icon: 'zip' },
+  { id: 'copy', label: 'COPY', icon: 'copy' }, { id: 'hash', label: 'HASH', icon: 'hash' }, { id: 'base64', label: 'BASE64', icon: 'code' }] };
 const WHEELS = {
-  pdf: [{ title: 'PDF', items: [{ id: 'docx', label: 'DOCX' }, { id: 'jpg', label: 'JPG' }, { id: 'png', label: 'PNG' }, { id: 'txt', label: 'TXT' }] }],
+  pdf: [
+    { title: 'PDF', items: [{ id: 'docx', label: 'DOCX' }, { id: 'jpg', label: 'JPG' }, { id: 'png', label: 'PNG' }, { id: 'txt', label: 'TXT' }] },
+    { title: 'PDF TOOLS', items: [
+      { id: 'split', label: 'SPLIT', icon: 'scissors' }, { id: 'rotpdf', label: 'ROTATE', icon: 'rotate' },
+      { id: 'clean', label: 'CLEAN', icon: 'eraser' }, { id: 'merge', label: 'MERGE', icon: 'merge' }] },
+    FILE_RING,
+  ],
   image: [
     { title: 'TOOLS', items: [
       { id: 'compress', label: 'COMPRESS', icon: 'compress' }, { id: 'metadata', label: 'METADATA', icon: 'tag' },
       { id: 'edit', label: 'EDIT', icon: 'sliders' }, { id: 'rotate', label: 'ROTATE', icon: 'rotate' },
       { id: 'annotate', label: 'ANNOTATE', icon: 'pen' }, { id: 'addbg', label: 'ADD BG', icon: 'image' },
       { id: 'crop', label: 'CROP', icon: 'crop' }, { id: 'redact', label: 'REDACT', icon: 'eyeoff' }] },
-    { title: 'CONVERT', items: [{ id: 'to-png', label: 'PNG' }, { id: 'to-jpg', label: 'JPG' }, { id: 'to-webp', label: 'WEBP' }, { id: 'to-pdf', label: 'PDF' }] },
+    { title: 'MORE', items: [
+      { id: 'resize', label: 'RESIZE', icon: 'resize' }, { id: 'flip', label: 'FLIP', icon: 'flip' }, { id: 'gray', label: 'B&W', icon: 'gray' },
+      { id: 'to-pdf', label: 'PDF', icon: 'merge' }] },
+    { title: 'CONVERT', items: [{ id: 'to-png', label: 'PNG' }, { id: 'to-jpg', label: 'JPG' }, { id: 'to-webp', label: 'WEBP' },
+      { id: 'to-ico', label: 'ICO' }, { id: 'to-bmp', label: 'BMP' }] },
+    FILE_RING,
   ],
-  text: [{ title: 'TEXT', items: [{ id: 'pdf', label: 'PDF' }, { id: 'docx', label: 'DOCX' }, { id: 'html', label: 'HTML' }] }],
-  other: [{ title: 'FILE', items: [{ id: 'zip', label: 'ZIP', icon: 'zip' }] }],
+  text: [{ title: 'TEXT', items: [{ id: 'pdf', label: 'PDF' }, { id: 'docx', label: 'DOCX' }, { id: 'html', label: 'HTML' }] }, FILE_RING],
+  zip: [{ title: 'ZIP', items: [
+    { id: 'extract', label: 'EXTRACT', icon: 'folder' }, { id: 'list', label: 'CONTENTS', icon: 'list' }, { id: 'repack', label: 'OPTIMIZE', icon: 'compress' }] }, FILE_RING],
+  other: [FILE_RING],
 };
 const R2 = 172, R1 = 74, SIZE = (R2 + 14) * 2, C = SIZE / 2;
 const wheel = { el: document.getElementById('wheel'), open: false, modes: null, mode: 0, hover: null, cx: 0, cy: 0 };
@@ -464,19 +504,26 @@ window.addEventListener('drop', async e => {
   const list = [...e.dataTransfer.files];
   endOs();
   const added = list.map((file, i) => addFile(file, file.name, { x: x + i * 110, y }));
-  if (act) for (const f of added) if (ACTIONS[f.kind]?.[act]) await runAction(f, act);
+  const group = act ? added.filter(f => ACTIONS[f.kind]?.[act]) : [];
+  if (group.length && ACTIONS[group[0].kind][act].multi) await runAction(group, act);
+  else for (const f of group) await runAction(f, act);
 });
 }
 
 // ---------- actions
-async function runAction(f, id) {
+async function runAction(target, id) {
+  const group = Array.isArray(target) ? target : [target], f = group[0];
   const a = ACTIONS[f.kind]?.[id];
   if (!a) return;
   const busy = a.modal ? null : toast('İşleniyor…', true);
   try {
     await nextFrame();
-    const outs = await a.run(f);
-    if (outs?.length) {
+    const outs = await (a.multi ? a.run(group) : a.run(f));
+    if (outs?.[0]?.renameTo) {
+      f.name = outs[0].renameTo; f.kind = kindOf(f.blob.type, f.name);
+      f.el.querySelector('.label').textContent = f.name;
+      toast('✓ ' + f.name, false, 2000);
+    } else if (outs?.length) {
       let pos = { x: f.x + 110, y: f.y }, last;
       for (const o of outs) { last = addFile(o.blob, o.name, pos); pos = { x: last.x, y: last.y }; }
       select(last);
@@ -527,13 +574,6 @@ async function convertImg(f, type) {
   c.getContext('2d').drawImage(img, 0, 0);
   return [{ blob: await exportCanvas(c, type, .92), name: `${baseName(f.name)}.${IMG_EXT[type]}` }];
 }
-async function imgToPdf(f) {
-  const img = await loadImage(f.url), w = img.naturalWidth, hh = img.naturalHeight, c = canvasOf(w, hh), x = c.getContext('2d');
-  x.fillStyle = '#fff'; x.fillRect(0, 0, w, hh); x.drawImage(img, 0, 0);
-  const doc = new jspdf.jsPDF({ orientation: w > hh ? 'l' : 'p', unit: 'px', format: [w, hh], hotfixes: ['px_scaling'], compress: true });
-  doc.addImage(c.toDataURL('image/jpeg', .92), 'JPEG', 0, 0, w, hh);
-  return [{ blob: doc.output('blob'), name: baseName(f.name) + '.pdf' }];
-}
 async function rotateImg(f) {
   const img = await loadImage(f.url), c = canvasOf(img.naturalHeight, img.naturalWidth), x = c.getContext('2d');
   x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(img, 0, 0);
@@ -575,6 +615,197 @@ async function textToHtml(f) {
   return [{ blob: new Blob([html], { type: 'text/html' }), name: b + '.html' }];
 }
 
+// ---------- more image tools
+const extOf = n => (n.match(/\.[^.\\/]+$/) || [''])[0];
+async function drawImageWith(f, w, hh, paint) {
+  const img = await loadImage(f.url), c = canvasOf(w ?? img.naturalWidth, hh ?? img.naturalHeight);
+  paint(c.getContext('2d'), img, c);
+  return c;
+}
+async function flipImg(f) {
+  const c = await drawImageWith(f, null, null, (x, img, c) => { x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(img, 0, 0); });
+  const ty = keepType(f);
+  return [{ blob: await exportCanvas(c, ty, .95), name: named(f, 'Flipped', ty) }];
+}
+async function grayImg(f) {
+  const c = await drawImageWith(f, null, null, (x, img) => { x.filter = 'grayscale(100%)'; x.drawImage(img, 0, 0); });
+  const ty = keepType(f);
+  return [{ blob: await exportCanvas(c, ty, .95), name: named(f, 'BW', ty) }];
+}
+async function toIco(f) {
+  // ICO with PNG entries (16–256 px), image centred on a transparent square
+  const img = await loadImage(f.url), sizes = [16, 32, 48, 256], pngs = [];
+  for (const s of sizes) {
+    const c = canvasOf(s, s), x = c.getContext('2d'), k = s / Math.max(img.naturalWidth, img.naturalHeight);
+    const w = img.naturalWidth * k, hh = img.naturalHeight * k;
+    x.imageSmoothingQuality = 'high'; x.drawImage(img, (s - w) / 2, (s - hh) / 2, w, hh);
+    pngs.push(new Uint8Array(await (await toBlob(c, 'image/png')).arrayBuffer()));
+  }
+  const head = new DataView(new ArrayBuffer(6 + 16 * sizes.length));
+  head.setUint16(2, 1, true); head.setUint16(4, sizes.length, true);
+  let off = head.byteLength;
+  sizes.forEach((s, i) => {
+    const e = 6 + i * 16;
+    head.setUint8(e, s % 256); head.setUint8(e + 1, s % 256); head.setUint16(e + 4, 1, true); head.setUint16(e + 6, 32, true);
+    head.setUint32(e + 8, pngs[i].length, true); head.setUint32(e + 12, off, true); off += pngs[i].length;
+  });
+  return [{ blob: new Blob([head.buffer, ...pngs], { type: 'image/x-icon' }), name: baseName(f.name) + '.ico' }];
+}
+async function toBmp(f) {
+  // 24-bit bottom-up BMP, transparency flattened onto white
+  const c = await drawImageWith(f, null, null, (x, img, c) => { x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0); });
+  const { width: w, height: hh } = c, px = c.getContext('2d').getImageData(0, 0, w, hh).data;
+  const row = Math.ceil(w * 3 / 4) * 4, size = 54 + row * hh, v = new DataView(new ArrayBuffer(size));
+  v.setUint16(0, 0x4d42, true); v.setUint32(2, size, true); v.setUint32(10, 54, true);
+  v.setUint32(14, 40, true); v.setInt32(18, w, true); v.setInt32(22, hh, true); v.setUint16(26, 1, true); v.setUint16(28, 24, true);
+  v.setUint32(34, row * hh, true);
+  for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
+    const s = ((hh - 1 - y) * w + x) * 4, d = 54 + y * row + x * 3;
+    v.setUint8(d, px[s + 2]); v.setUint8(d + 1, px[s + 1]); v.setUint8(d + 2, px[s]);
+  }
+  return [{ blob: new Blob([v.buffer], { type: 'image/bmp' }), name: baseName(f.name) + '.bmp' }];
+}
+async function imagesToPdf(fs) {
+  // one image → one page; several dropped images → one multi-page PDF
+  let doc;
+  for (const f of fs) {
+    const img = await loadImage(f.url), w = img.naturalWidth, hh = img.naturalHeight, c = canvasOf(w, hh), x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, hh); x.drawImage(img, 0, 0);
+    const opts = [w > hh ? 'l' : 'p', 'px', [w, hh]];
+    if (!doc) doc = new jspdf.jsPDF({ orientation: opts[0], unit: 'px', format: opts[2], hotfixes: ['px_scaling'], compress: true });
+    else doc.addPage(opts[2], opts[0]);
+    doc.addImage(c.toDataURL('image/jpeg', .92), 'JPEG', 0, 0, w, hh);
+  }
+  return [{ blob: doc.output('blob'), name: (fs.length > 1 ? t('Birleştirilmiş') : baseName(fs[0].name)) + '.pdf' }];
+}
+async function resizeTool(f) {
+  const img = await loadImage(f.url), W = img.naturalWidth, H = img.naturalHeight;
+  const m = openModal('Resize', { primary: 'Apply' });
+  let w = W, hh = H, lock = true;
+  const wIn = h('input', { type: 'number', min: 1, value: W }), hIn = h('input', { type: 'number', min: 1, value: H });
+  const info = h('div', { class: 'note' });
+  const upd = () => { wIn.value = w; hIn.value = hh; info.textContent = `${W}×${H} → ${w}×${hh} px`; };
+  const pct = slider('Scale', 5, 200, 100, '%', v => { w = Math.max(1, Math.round(W * v / 100)); hh = Math.max(1, Math.round(H * v / 100)); upd(); });
+  wIn.onchange = () => { w = Math.max(1, +wIn.value || 1); if (lock) hh = Math.max(1, Math.round(w * H / W)); upd(); };
+  hIn.onchange = () => { hh = Math.max(1, +hIn.value || 1); if (lock) w = Math.max(1, Math.round(hh * W / H)); upd(); };
+  const lockBox = h('input', { type: 'checkbox', checked: '' }); lockBox.onchange = () => { lock = lockBox.checked; };
+  const preview = h('div', { class: 'preview' }, h('img', { src: f.url }));
+  m.body.append(preview, pct, row('Width', wIn, 'px'), row('Height', hIn, 'px'), row('', h('label', {}, lockBox, ' ' + t('Keep ratio'))), info);
+  upd();
+  m.onReset = () => { w = W; hh = H; pct.set(100); upd(); };
+  m.onSave = async () => {
+    const c = canvasOf(w, hh), x = c.getContext('2d');
+    x.imageSmoothingQuality = 'high'; x.drawImage(img, 0, 0, w, hh);
+    const ty = keepType(f);
+    return [{ blob: await exportCanvas(c, ty, .95), name: named(f, `${w}x${hh}`, ty) }];
+  };
+  return m.result;
+}
+
+// ---------- PDF tools (pdf-lib)
+const loadPdfDoc = async blob => PDFLib.PDFDocument.load(await blob.arrayBuffer(), { ignoreEncryption: true });
+const pdfBlob = async doc => new Blob([await doc.save()], { type: 'application/pdf' });
+async function zipIfMany(outs, zipName) {
+  if (outs.length <= 4) return outs;
+  const z = new JSZip(); outs.forEach(o => z.file(o.name, o.blob));
+  return [{ blob: await z.generateAsync({ type: 'blob' }), name: zipName }];
+}
+async function splitPdf(f) {
+  const src = await loadPdfDoc(f.blob), b = baseName(f.name), outs = [];
+  for (let i = 0; i < src.getPageCount(); i++) {
+    const d = await PDFLib.PDFDocument.create(), [p] = await d.copyPages(src, [i]);
+    d.addPage(p); outs.push({ blob: await pdfBlob(d), name: `${b} - ${pad(i + 1)}.pdf` });
+  }
+  return zipIfMany(outs, `${b} (${t('pages')}).zip`);
+}
+async function rotatePdf(f) {
+  const d = await loadPdfDoc(f.blob);
+  d.getPages().forEach(p => p.setRotation(PDFLib.degrees((p.getRotation().angle + 90) % 360)));
+  return [{ blob: await pdfBlob(d), name: `${baseName(f.name)} Rotated.pdf` }];
+}
+async function cleanPdf(f) {
+  const d = await loadPdfDoc(f.blob);
+  d.setTitle(''); d.setAuthor(''); d.setSubject(''); d.setKeywords([]); d.setCreator(''); d.setProducer('');
+  return [{ blob: await pdfBlob(d), name: `${baseName(f.name)} Clean.pdf` }];
+}
+async function mergePdfs(fs) {
+  if (fs.length < 2) throw new Error(t('Birleştirmek için birden fazla PDF bırak.'));
+  const out = await PDFLib.PDFDocument.create();
+  for (const f of fs) { const src = await loadPdfDoc(f.blob); (await out.copyPages(src, src.getPageIndices())).forEach(p => out.addPage(p)); }
+  return [{ blob: await pdfBlob(out), name: t('Birleştirilmiş') + '.pdf' }];
+}
+
+// ---------- ZIP tools
+async function extractZip(f) {
+  const z = await JSZip.loadAsync(f.blob), b = baseName(f.name), outs = [];
+  for (const e of Object.values(z.files)) {
+    if (e.dir) continue;
+    const rel = e.name.split(/[\\/]/).filter(s => s && s !== '.' && s !== '..').join('/'); // no escaping the folder
+    if (rel) outs.push({ blob: await e.async('blob'), name: `${b}/${rel}` });
+  }
+  if (!outs.length) throw new Error(t('ZIP boş'));
+  return outs;
+}
+async function listZip(f) {
+  const z = await JSZip.loadAsync(f.blob), lines = [];
+  let total = 0;
+  for (const e of Object.values(z.files)) {
+    if (e.dir) continue;
+    const n = (await e.async('uint8array')).length; total += n;
+    lines.push(`${fmtSize(n).padStart(10)}  ${e.date.toLocaleString(LANG === 'tr' ? 'tr-TR' : 'en-GB')}  ${e.name}`);
+  }
+  lines.push('', `${lines.length} ${t('dosya')}, ${fmtSize(total)} (${t('ZIP')}: ${fmtSize(f.blob.size)})`);
+  return [{ blob: new Blob([lines.join('\r\n')], { type: 'text/plain' }), name: `${baseName(f.name)} - ${t('içerik')}.txt` }];
+}
+async function repackZip(f) {
+  const z = await JSZip.loadAsync(f.blob);
+  const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 9 } });
+  return [{ blob, name: `${baseName(f.name)} (optimize).zip` }];
+}
+
+// ---------- common file tools (every kind)
+const toBase64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(blob); });
+async function hashTool(f) {
+  const buf = await f.blob.arrayBuffer(), hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+  const m = openModal('Hash', { primary: 'Tamam', reset: false });
+  const line = (k, v) => h('tr', {}, h('td', {}, k), h('td', {}, h('code', { style: { wordBreak: 'break-all' } }, v), ' ',
+    h('button', { class: 'btn soft', style: { padding: '2px 8px', fontSize: '11px' }, onclick: e => { navigator.clipboard.writeText(v); e.target.textContent = '✓'; } }, t('Copy'))));
+  m.body.append(h('table', { class: 'meta' },
+    line(t('Ad'), f.name), line(t('Boyut'), fmtSize(f.blob.size)),
+    line('SHA-256', hex(await crypto.subtle.digest('SHA-256', buf))), line('SHA-1', hex(await crypto.subtle.digest('SHA-1', buf)))));
+  m.onSave = async () => null;
+  return m.result;
+}
+async function extTool(f) {
+  const cur = extOf(f.name).slice(1), base = f.name.slice(0, f.name.length - extOf(f.name).length);
+  const m = openModal('Change Extension', { primary: 'Apply', reset: false });
+  const inp = h('input', { type: 'text', value: cur, style: { width: '120px' } });
+  const preview = h('div', { class: 'note' });
+  const upd = () => { preview.textContent = `${f.name} → ${base}${inp.value ? '.' + inp.value.replace(/^\./, '') : ''}`; };
+  inp.oninput = upd;
+  const COMMON_EXT = { image: ['jpg', 'png', 'webp', 'gif'], pdf: ['pdf'], text: ['txt', 'md', 'json', 'csv', 'html'], zip: ['zip', 'cbz', 'jar'], other: ['txt', 'bin', 'dat'] }[f.kind] || [];
+  m.body.append(row('New extension', inp), row('', ...COMMON_EXT.map(e => h('button', { class: 'btn soft', style: { padding: '4px 10px' }, onclick: () => { inp.value = e; upd(); } }, '.' + e))), preview,
+    h('div', { class: 'note' }, t('Dosyanın içeriği değişmez; sadece adı değişir.')));
+  upd();
+  m.onSave = async () => {
+    const ext = inp.value.trim().replace(/^\./, '');
+    if (ext && !/^[\w-]{1,15}$/.test(ext)) throw new Error(t('Geçersiz uzantı'));
+    return [{ renameTo: base + (ext ? '.' + ext : '') }];
+  };
+  return m.result;
+}
+const COMMON_ACTIONS = {
+  ext: { modal: true, run: f => extTool(f) },
+  zip: { multi: true, run: async fs => {
+    const z = new JSZip(); fs.forEach(f => z.file(f.name, f.blob));
+    const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    return [{ blob, name: fs.length > 1 ? t('Arşiv') + '.zip' : fs[0].name + '.zip' }];
+  } },
+  copy: { run: async f => [{ blob: f.blob, name: `${f.name.slice(0, f.name.length - extOf(f.name).length)} - ${t('Kopya')}${extOf(f.name)}` }] },
+  hash: { modal: true, run: f => hashTool(f) },
+  base64: { run: async f => [{ blob: new Blob([await toBase64(f.blob)], { type: 'text/plain' }), name: f.name + '.b64.txt' }] },
+};
+
 const ACTIONS = {
   pdf: {
     docx: { run: async f => {
@@ -585,6 +816,10 @@ const ACTIONS = {
     txt: { run: async f => [{ blob: new Blob([(await pdfText(f.blob)).join('\n\n')], { type: 'text/plain' }), name: baseName(f.name) + '.txt' }] },
     jpg: { run: f => pdfToImages(f, 'image/jpeg') },
     png: { run: f => pdfToImages(f, 'image/png') },
+    split: { run: splitPdf },
+    rotpdf: { run: rotatePdf },
+    clean: { run: cleanPdf },
+    merge: { multi: true, run: mergePdfs },
   },
   image: {
     compress: { modal: true, run: f => compressTool(f) },
@@ -598,17 +833,26 @@ const ACTIONS = {
     'to-png': { run: f => convertImg(f, 'image/png') },
     'to-jpg': { run: f => convertImg(f, 'image/jpeg') },
     'to-webp': { run: f => convertImg(f, 'image/webp') },
-    'to-pdf': { run: imgToPdf },
+    'to-pdf': { multi: true, run: imagesToPdf },
+    'to-ico': { run: toIco },
+    'to-bmp': { run: toBmp },
+    resize: { modal: true, run: f => resizeTool(f) },
+    flip: { run: flipImg },
+    gray: { run: grayImg },
   },
   text: {
     pdf: { run: textToPdf },
     docx: { run: async f => [{ blob: await makeDocx((await f.blob.text()).split(/\r?\n/)), name: baseName(f.name) + '.docx' }] },
     html: { run: textToHtml },
   },
-  other: {
-    zip: { run: async f => { const z = new JSZip(); z.file(f.name, f.blob); return [{ blob: await z.generateAsync({ type: 'blob' }), name: f.name + '.zip' }]; } },
+  zip: {
+    extract: { run: extractZip },
+    list: { run: listZip },
+    repack: { run: repackZip },
   },
+  other: {},
 };
+for (const k of Object.keys(ACTIONS)) ACTIONS[k] = { ...COMMON_ACTIONS, ...ACTIONS[k] };
 
 // ---------- modal + controls
 function openModal(title, { primary = 'Kaydet', reset = true } = {}) {
@@ -1007,10 +1251,14 @@ async function metadataTool(f) {
 updateEmpty();
 
 // ---------- Electron: global overlay wheel + tool windows
-const MIME = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', bmp: 'image/bmp',
+const MIME = { pdf: 'application/pdf', zip: 'application/zip', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', bmp: 'image/bmp',
   avif: 'image/avif', svg: 'image/svg+xml', txt: 'text/plain', md: 'text/markdown', csv: 'text/csv', json: 'application/json', log: 'text/plain', html: 'text/html', htm: 'text/html', xml: 'text/xml' };
 const dirOf = p => p ? p.replace(/[\\/][^\\/]*$/, '') : '';
 async function saveOutputs(outs, srcPath) {
+  if (outs[0].renameTo) {
+    const p = await window.desktop.rename(srcPath, outs[0].renameTo);
+    return window.desktop.notify('✓ ' + p.split(/[\\/]/).pop(), p);
+  }
   let last;
   for (const o of outs) last = await window.desktop.save(dirOf(srcPath), o.name, new Uint8Array(await o.blob.arrayBuffer()));
   window.desktop.notify('✓ ' + (outs.length > 1 ? `${outs.length} dosya kaydedildi` : outs[0].name), last);
@@ -1048,16 +1296,23 @@ if (DESKTOP_MODE === 'wheel') {
     const list = [...e.dataTransfer.files].map(file => ({ file, path: D.pathFor(file) }));
     closeWheel(); D.hide();
     if (!act) return;
-    for (const { file, path } of list) {
-      const k = kindOf(file.type, file.name), a = ACTIONS[k]?.[act];
-      if (!a) continue;
-      if (a.modal) { D.openEditor(path, act); continue; }
+    const items = list.map(({ file, path }) => ({ path, name: file.name, blob: file, kind: kindOf(file.type, file.name) }))
+      .filter(f => ACTIONS[f.kind]?.[act]);
+    if (!items.length) return;
+    const run = async (a, arg, path) => {
       try {
-        const f = { name: file.name, blob: file, kind: k, url: URL.createObjectURL(file) };
-        const outs = await a.run(f);
-        URL.revokeObjectURL(f.url);
+        const fs = [].concat(arg);
+        fs.forEach(f => f.url = URL.createObjectURL(f.blob));
+        const outs = await a.run(arg);
+        fs.forEach(f => URL.revokeObjectURL(f.url));
         if (outs?.length) await saveOutputs(outs, path);
       } catch (err) { console.error(err); D.notify('Hata: ' + (err.message || err)); }
+    };
+    const first = ACTIONS[items[0].kind][act];
+    if (first.multi) return run(first, items, items[0].path); // e.g. many files → one ZIP / one PDF
+    for (const f of items) {
+      const a = ACTIONS[f.kind][act];
+      if (a.modal) D.openEditor(f.path, act); else await run(a, f, f.path);
     }
   });
 }
@@ -1083,7 +1338,8 @@ if (DESKTOP_MODE === 'editor') (async () => {
     const name = path.split(/[\\/]/).pop(), ext = (name.match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
     const blob = new Blob([await D.read(path)], { type: MIME[ext] || '' });
     const f = { name, blob, kind: kindOf(blob.type, name), url: URL.createObjectURL(blob) };
-    const outs = await ACTIONS[f.kind][tool].run(f);
+    const a = ACTIONS[f.kind][tool];
+    const outs = await (a.multi ? a.run([f]) : a.run(f));
     if (outs?.length) await saveOutputs(outs, path);
   } catch (err) { console.error(err); D.notify('Hata: ' + (err.message || err)); }
   D.close();

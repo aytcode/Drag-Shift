@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('desktop', {
   pathFor: file => webUtils.getPathForFile(file),
   save: (dir, name, bytes) => ipcRenderer.invoke('save', dir, name, bytes),
   read: path => ipcRenderer.invoke('read', path),
+  rename: (path, newName) => ipcRenderer.invoke('rename', path, newName),
   openEditor: (path, tool) => ipcRenderer.send('editor', path, tool),
   hide: () => ipcRenderer.send('hide'),
   close: () => ipcRenderer.send('close'),

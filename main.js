@@ -126,8 +126,9 @@ let editorWin;
 function openEditor(file, tool) {
   if (editorWin && !editorWin.isDestroyed()) editorWin.destroy();
   const wa = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
-  const width = Math.round(Math.min(Math.max(wa.width * .8, 900), 1500, wa.width));
-  const height = Math.round(Math.min(Math.max(wa.height * .88, 640), 1050, wa.height));
+  const small = ['ext', 'hash'].includes(tool); // dialogs without an image preview
+  const width = small ? 560 : Math.round(Math.min(Math.max(wa.width * .8, 900), 1500, wa.width));
+  const height = small ? 420 : Math.round(Math.min(Math.max(wa.height * .88, 640), 1050, wa.height));
   editorWin = new BrowserWindow({
     x: wa.x + Math.round((wa.width - width) / 2), y: wa.y + Math.round((wa.height - height) / 2), width, height,
     frame: false, transparent: true, resizable: true, title: 'Drag + Shift',
@@ -154,10 +155,20 @@ function uniquePath(dir, name) {
   return p;
 }
 
+const safeName = s => s.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').replace(/^\.+$/, '_');
 ipcMain.handle('save', (_e, dir, name, bytes) => {
   if (!dir || !fs.existsSync(dir)) dir = app.getPath('downloads');
-  const p = uniquePath(dir, name.replace(/[<>:"/\\|?*]/g, '_'));
+  // "folder/sub/file" (e.g. an extracted ZIP) → create the folders; '..' can never leave dir
+  const parts = name.split(/[\\/]/).filter(s => s && s !== '.' && s !== '..').map(safeName);
+  const target = path.join(dir, ...parts.slice(0, -1));
+  fs.mkdirSync(target, { recursive: true });
+  const p = uniquePath(target, parts[parts.length - 1] || '_');
   fs.writeFileSync(p, Buffer.from(bytes));
+  return p;
+});
+ipcMain.handle('rename', (_e, src, newName) => {
+  const p = uniquePath(path.dirname(src), safeName(path.basename(newName)));
+  fs.renameSync(src, p);
   return p;
 });
 ipcMain.handle('read', (_e, p) => new Uint8Array(fs.readFileSync(p)));

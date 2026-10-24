@@ -11,18 +11,18 @@ Windows için arka planda çalışan küçük bir eklenti: bir dosyayı sürükl
 ## Kullanım
 
 1. Explorer'da ya da masaüstünde bir dosyayı sürüklemeye başla.
-2. Sürüklerken **Shift**'e bas, çark açılır. Görsellerde tekrar **Shift** → Tools / Convert arasında geçiş.
-3. Dosyayı bir dilimin üstüne bırak. **Esc** çarkı kapatır.
+2. Sürüklerken **Shift**'e bas, çark açılır. Tekrar **Shift** → sıradaki çark (ör. Araçlar → Daha fazla → Dönüştür → Dosya).
+3. Dosyayı bir dilimin üstüne bırak. **Esc** çarkı kapatır. Birden fazla dosya da sürüklenebilir.
 
-| Dosya | İşlemler |
+| Dosya | Çarklar ve işlemler |
 |---|---|
-| PDF | DOCX, JPG, PNG, TXT (5+ sayfa görselleri ZIP olur) |
-| Görsel – Tools | Compress, Metadata (EXIF/GPS görüntüle & sil), Edit, Rotate, Annotate, Add BG, Crop, Redact |
-| Görsel – Convert | PNG, JPG, WEBP, PDF |
+| PDF | **PDF:** DOCX, JPG, PNG, TXT · **PDF Araçları:** Sayfalara ayır, Döndür, Üstveri temizle, Birleştir (birden fazla PDF) |
+| Görsel | **Araçlar:** Sıkıştır, Üstveri (EXIF/GPS görüntüle & sil), Düzenle, Döndür, İşaretle, Arka plan, Kırp, Gizle · **Daha fazla:** Boyutlandır, Yatay çevir, Siyah-beyaz, PDF (birden fazla görsel → tek PDF) · **Dönüştür:** PNG, JPG, WEBP, ICO, BMP |
+| ZIP | Klasöre çıkar, İçerik listesi, Optimize et (en yüksek sıkıştırma) |
 | Metin (.txt, .md, .csv…) | PDF, DOCX, HTML |
-| Diğer | ZIP |
+| **Her dosya** (Dosya çarkı) | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya oluştur, Hash (SHA-256/SHA-1), Base64 |
 
-Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Çark Windows temasını (koyu/açık) ve vurgu rengini kullanır.
+Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Arayüz Türkçe (tepsi menüsünden İngilizceye geçilebilir); çark Windows temasını (koyu/açık) ve vurgu rengini kullanır.
 
 ## Geliştirme
 

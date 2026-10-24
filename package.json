@@ -1,0 +1,48 @@
+{
+  "name": "drag-shift",
+  "productName": "DragShift",
+  "author": "aliyigit",
+  "version": "1.0.0",
+  "description": "Drag any file, press Shift, drop it on an action.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "jspdf": "2.5.1",
+    "jszip": "3.10.1",
+    "koffi": "^3.3.3",
+    "pdfjs-dist": "3.11.174"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "app.dragshift",
+    "files": [
+      "package.json",
+      "main.js",
+      "preload.js",
+      "index.html"
+    ],
+    "asarUnpack": [
+      "node_modules/koffi/**"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "shortcutName": "Drag + Shift",
+      "createDesktopShortcut": false
+    }
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}

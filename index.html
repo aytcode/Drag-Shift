@@ -142,6 +142,12 @@
   body.editor .modal, body.help .modal { width:100%; height:100vh; max-height:100vh; animation:none; }
   body.editor .mhead, body.help .mhead { -webkit-app-region:drag; }
   body.editor .mhead button, body.help .mhead button { -webkit-app-region:no-drag; }
+  body.editor .mbody { display:flex; gap:16px; padding:0 18px 12px; overflow:hidden; }
+  body.editor .stagecol { flex:1; min-width:0; display:flex; }
+  body.editor .stagecol .preview { flex:1; margin:0; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  body.editor .preview canvas, body.editor .preview > img { max-width:100%; max-height:100%; }
+  body.editor .sidecol { width:330px; flex:none; overflow:auto; padding-right:2px; }
+  body.editor .sidecol .row > label { width:100px; }
   .helpok { display:flex; align-items:center; gap:8px; font-weight:600; color:#15803d; margin:4px 0 12px; }
   .helpok i { width:9px; height:9px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.2); }
   .steps { margin:0; padding-left:20px; font-size:13px; line-height:1.9; user-select:text; }
@@ -158,6 +164,30 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.js';
 // Set when running inside the Electron app: 'wheel' (global overlay) or 'editor' (tool window).
 const DESKTOP_MODE = window.desktop ? new URLSearchParams(location.search).get('mode') : null;
+
+// ---------- interface language (Turkish by default; English from the tray menu)
+const LANG = new URLSearchParams(location.search).get('lang') || 'tr';
+const I18N = {
+  tr: {
+    COMPRESS: 'SIKIŞTIR', METADATA: 'ÜSTVERİ', EDIT: 'DÜZENLE', ROTATE: 'DÖNDÜR', ANNOTATE: 'İŞARETLE',
+    'ADD BG': 'ARKA PLAN', CROP: 'KIRP', REDACT: 'GİZLE', TOOLS: 'ARAÇLAR', CONVERT: 'DÖNÜŞTÜR', FILE: 'DOSYA', TEXT: 'METİN',
+    'Crop Image': 'Kırp', 'Add BG': 'Arka Plan Ekle', 'Edit Image': 'Düzenle', Redact: 'Gizle', Annotate: 'İşaretle',
+    Compress: 'Sıkıştır', Metadata: 'Üstveri', Apply: 'Uygula', 'Save with Background': 'Arka Planla Kaydet', Save: 'Kaydet',
+    Reset: 'Sıfırla', 'Remove Metadata': 'Üstveriyi Sil', Undo: 'Geri Al',
+    'Aspect ratio': 'En-boy oranı', Background: 'Arka plan', Padding: 'Kenar boşluğu', Corners: 'Köşeler', Shadow: 'Gölge',
+    Ratio: 'Oran', Brightness: 'Parlaklık', Contrast: 'Kontrast', Saturation: 'Doygunluk', Hue: 'Ton', Grayscale: 'Gri ton',
+    Sepia: 'Sepya', Blur: 'Bulanıklık', Free: 'Serbest', Auto: 'Otomatik', Black: 'Siyah', Pixelate: 'Pikselleştir',
+    Pen: 'Kalem', Highlight: 'Vurgu', Arrow: 'Ok', Box: 'Kutu',
+  },
+  en: {
+    'bırak': 'drop', Kapat: 'Close', Kaydet: 'Save', Tamam: 'OK', Boyut: 'Size', Stil: 'Style', Araç: 'Tool', Renk: 'Colour',
+    Kalınlık: 'Thickness', Kalite: 'Quality', 'Maks. kenar': 'Max. edge', Orijinal: 'Original',
+    'Gizlemek istediğin alanların üstüne kutu çiz.': 'Draw boxes over the areas you want to hide.',
+    'Arka planda çalışıyor': 'Running in the background',
+  },
+};
+const t = s => I18N[LANG]?.[s] ?? s;
+document.documentElement.lang = LANG;
 
 // ---------- small helpers
 const h = (tag, attrs = {}, ...kids) => {
@@ -326,7 +356,7 @@ function renderWheel() {
   const r = (R1 + R2) / 2 + 4;
   items.forEach((it, i) => wheel.el.append(h('div', { class: 'wl', 'data-id': it.id,
     style: { left: C + r * Math.sin(i * step) + 'px', top: C - r * Math.cos(i * step) + 'px' },
-    html: (it.icon ? svgIcon(it.icon) : '') + `<span>${it.label}</span>` })));
+    html: (it.icon ? svgIcon(it.icon) : '') + `<span>${t(it.label)}</span>` })));
   wheel.center = h('div', { class: 'wc' });
   wheel.el.append(wheel.center);
   setHover(null, true);
@@ -336,8 +366,8 @@ function setHover(id, force) {
   wheel.hover = id;
   wheel.el.querySelectorAll('[data-id]').forEach(el => el.classList.toggle('hot', el.dataset.id === id));
   const mode = wheel.modes[wheel.mode], it = mode.items.find(i => i.id === id);
-  const other = wheel.modes.length > 1 ? `<small>⇧ ${wheel.modes[(wheel.mode + 1) % wheel.modes.length].title}</small>` : '<small>bırak</small>';
-  wheel.center.innerHTML = it ? `<b>${it.label}</b>` : `<b>${mode.title}</b>${other}`;
+  const other = wheel.modes.length > 1 ? `<small>⇧ ${t(wheel.modes[(wheel.mode + 1) % wheel.modes.length].title)}</small>` : `<small>${t('bırak')}</small>`;
+  wheel.center.innerHTML = it ? `<b>${t(it.label)}</b>` : `<b>${t(mode.title)}</b>${other}`;
 }
 function hitWheel(x, y) {
   const dx = x - wheel.cx, dy = y - wheel.cy, d = Math.hypot(dx, dy);
@@ -585,11 +615,18 @@ function openModal(title, { primary = 'Kaydet', reset = true } = {}) {
   let resolve;
   const result = new Promise(r => resolve = r);
   const body = h('div', { class: 'mbody' });
-  const resetBtn = h('button', { class: 'btn soft' }, 'Reset');
-  const primaryBtn = h('button', { class: 'btn primary' }, primary);
+  const resetBtn = h('button', { class: 'btn soft' }, t('Reset'));
+  const primaryBtn = h('button', { class: 'btn primary' }, t(primary));
+  title = t(title);
+  if (DESKTOP_MODE === 'editor') {
+    // Big tool window: image on the left filling the space, controls in a side column.
+    const stage = h('div', { class: 'stagecol' }), side = h('div', { class: 'sidecol' });
+    body.append(stage, side);
+    body.append = (...nodes) => nodes.forEach(n => n && (n.classList?.contains('preview') ? stage : side).append(n));
+  }
   const back = h('div', { class: 'backdrop' },
     h('div', { class: 'modal' },
-      h('div', { class: 'mhead' }, h('button', { class: 'x', title: 'Kapat', html: '&times;', onclick: () => finish(null) }), h('div', { class: 'mtitle' }, title)),
+      h('div', { class: 'mhead' }, h('button', { class: 'x', title: t('Kapat'), html: '&times;', onclick: () => finish(null) }), h('div', { class: 'mtitle' }, title)),
       body,
       h('div', { class: 'mfoot' }, reset ? resetBtn : h('span'), primaryBtn)));
   back.addEventListener('pointerdown', e => { if (e.target === back) finish(null); });
@@ -611,26 +648,31 @@ function slider(label, min, max, value, unit, onInput, step = 1) {
   const upd = () => { val.textContent = inp.value + (unit ? ' ' + unit : ''); };
   inp.addEventListener('input', () => { upd(); onInput(+inp.value); });
   upd();
-  const row = h('div', { class: 'row' }, h('label', {}, label), inp, val);
+  const row = h('div', { class: 'row' }, h('label', {}, t(label)), inp, val);
   row.set = v => { inp.value = v; upd(); };
   return row;
 }
 function segmented(opts, value, onChange) {
   const el = h('div', { class: 'segc' });
-  const btns = opts.map(o => { const b = h('button', { onclick: () => { set(o.v); onChange(o.v); } }, o.l); el.append(b); return [o.v, b]; });
+  const btns = opts.map(o => { const b = h('button', { onclick: () => { set(o.v); onChange(o.v); } }, t(o.l)); el.append(b); return [o.v, b]; });
   function set(v) { btns.forEach(([k, b]) => b.classList.toggle('on', k === v)); }
   set(value); el.set = set;
   return el;
 }
-const row = (label, ...kids) => h('div', { class: 'row' }, h('label', {}, label), ...kids);
-const previewScale = (w, hh) => Math.min(1, 900 / Math.max(w, hh));
+const row = (label, ...kids) => h('div', { class: 'row' }, h('label', {}, t(label)), ...kids);
+// Preview resolution: larger in the full-size tool window so the image stays sharp.
+const previewScale = (w, hh) => Math.min(1, (DESKTOP_MODE === 'editor' ? 1800 : 900) / Math.max(w, hh));
+// Room the image may take on screen (the tool window gives it everything left of the side column).
+const stageRoom = () => DESKTOP_MODE === 'editor'
+  ? { w: Math.max(300, innerWidth - 400), h: Math.max(240, innerHeight - 150) }
+  : { w: 500, h: 340 };
 function canvasPoint(c, e) { const r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height }; }
 
 // ---------- image tools
 async function cropTool(f) {
   const img = await loadImage(f.url), W = img.naturalWidth, H = img.naturalHeight;
   const m = openModal('Crop Image', { primary: 'Apply' });
-  const s = Math.min(1, 500 / W, 340 / H);
+  const room = stageRoom(), s = Math.min(DESKTOP_MODE === 'editor' ? 3 : 1, room.w / W, room.h / H);
   const box = h('div', { class: 'cropbox' }, ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(k => h('div', { class: 'hd ' + k, 'data-h': k })));
   const stage = h('div', { class: 'cropstage', style: { width: W * s + 'px', height: H * s + 'px' } }, h('img', { src: f.url, draggable: 'false' }), box);
   const wIn = h('input', { type: 'number', min: 20, max: W }), hIn = h('input', { type: 'number', min: 20, max: H });
@@ -803,7 +845,7 @@ async function redactTool(f) {
   m.body.append(h('div', { class: 'preview' }, cv),
     row('Stil', segmented([{ l: 'Black', v: 'black' }, { l: 'Blur', v: 'blur' }, { l: 'Pixelate', v: 'pixel' }], mode, v => { mode = v; }),
       h('button', { class: 'btn soft', onclick: () => { rects.pop(); redraw(); } }, 'Undo')),
-    h('div', { class: 'note' }, 'Gizlemek istediğin alanların üstüne kutu çiz.'));
+    h('div', { class: 'note' }, t('Gizlemek istediğin alanların üstüne kutu çiz.')));
   redraw();
   m.onReset = () => { rects = []; redraw(); };
   m.onSave = async () => { const c = document.createElement('canvas'); render(c, 1); const t = keepType(f); return [{ blob: await exportCanvas(c, t, .95), name: named(f, 'Redacted', t) }]; };
@@ -950,7 +992,9 @@ async function metadataTool(f) {
     h('table', { class: 'meta' }, Object.entries(base).map(([k, val]) => tr(k, val))),
     h('div', { class: 'note' }, hasMeta ? 'Gömülü metadata:' : 'Gömülü metadata (EXIF/XMP/PNG text) bulunamadı.'),
     hasMeta ? h('table', { class: 'meta' }, Object.entries(meta).map(([k, val]) => tr(k, val))) : null,
-    h('div', { class: 'note' }, '“Remove Metadata” görseli yeniden kodlar; EXIF, GPS ve diğer gömülü bilgiler silinmiş temiz bir kopya oluşturur.'));
+    h('div', { class: 'note' }, LANG === 'tr'
+      ? '“Üstveriyi Sil” görseli yeniden kodlar; EXIF, GPS ve diğer gömülü bilgiler silinmiş temiz bir kopya oluşturur.'
+      : '“Remove Metadata” re-encodes the image into a clean copy without EXIF, GPS or other embedded data.'));
   m.onSave = async () => {
     const c = canvasOf(img.naturalWidth, img.naturalHeight);
     c.getContext('2d').drawImage(img, 0, 0);
@@ -972,6 +1016,8 @@ async function saveOutputs(outs, srcPath) {
   window.desktop.notify('✓ ' + (outs.length > 1 ? `${outs.length} dosya kaydedildi` : outs[0].name), last);
 }
 if (DESKTOP_MODE) document.body.classList.add('desktop', DESKTOP_MODE);
+// Tool and help windows must never swallow a file dropped on them (only the wheel takes drops).
+if (DESKTOP_MODE && DESKTOP_MODE !== 'wheel') for (const ev of ['dragover', 'drop']) window.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; });
 
 if (DESKTOP_MODE === 'wheel') {
   const D = window.desktop, q = new URLSearchParams(location.search);
@@ -1019,7 +1065,7 @@ if (DESKTOP_MODE === 'wheel') {
 if (DESKTOP_MODE === 'help') (async () => {
   const m = openModal('Drag + Shift', { primary: 'Tamam', reset: false });
   m.body.append(
-    h('div', { class: 'helpok' }, h('i'), 'Arka planda çalışıyor'),
+    h('div', { class: 'helpok' }, h('i'), t('Arka planda çalışıyor')),
     h('ol', { class: 'steps' },
       h('li', {}, 'Masaüstünde ya da Explorer\'da bir dosyayı tut ve sürükle.'),
       h('li', {}, 'Sürüklerken ', h('kbd', {}, 'Shift'), '\'e bas — imlecin altında çark açılır.'),

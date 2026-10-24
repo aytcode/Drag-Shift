@@ -58,8 +58,20 @@ function createWheel() {
   wheelWin.setAlwaysOnTop(true, 'screen-saver');
   // match the Windows theme and accent colour so the wheel looks like part of the system
   const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-  wheelWin.loadFile('index.html', { query: { mode: 'wheel', theme, accent: systemPreferences.getAccentColor() } });
+  wheelWin.loadFile('index.html', { query: { mode: 'wheel', theme, lang: settings.lang, accent: systemPreferences.getAccentColor() } });
   wheelWin.webContents.on('console-message', (_e, level, msg) => { if (level >= 3) log('wheel', msg); });
+}
+
+// ---------- settings (interface language)
+const SETTINGS = () => path.join(app.getPath('userData'), 'settings.json');
+let settings = { lang: 'tr' };
+function loadSettings() { try { Object.assign(settings, JSON.parse(fs.readFileSync(SETTINGS(), 'utf8'))); } catch {} }
+function setLang(lang) {
+  settings.lang = lang;
+  fs.writeFileSync(SETTINGS(), JSON.stringify(settings));
+  const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+  wheelWin.loadFile('index.html', { query: { mode: 'wheel', theme, lang, accent: systemPreferences.getAccentColor() } });
+  buildTray();
 }
 
 function showWheel() {
@@ -67,6 +79,7 @@ function showWheel() {
   wheelWin.setBounds({ x: Math.round(p.x - WHEEL / 2), y: Math.round(p.y - WHEEL / 2), width: WHEEL, height: WHEEL });
   wheelWin.webContents.send('wheel:show');
   wheelWin.showInactive();
+  wheelWin.moveTop(); // above any open tool window, so the drop always lands on the wheel
   shown = true;
   // hide once the button is really released (the drop is handled by the wheel window first)
   const poll = setInterval(() => {
@@ -107,12 +120,20 @@ function startWatching() {
   log('watching input');
 }
 
+// One tool window at a time: a new drop replaces the previous editor instead of
+// opening behind it. Sized from the screen so the image is large enough to work on.
+let editorWin;
 function openEditor(file, tool) {
-  const win = new BrowserWindow({
-    width: 620, height: 720, frame: false, transparent: true, resizable: true, alwaysOnTop: true,
-    title: 'Drag + Shift', webPreferences: { preload: path.join(__dirname, 'preload.js') },
+  if (editorWin && !editorWin.isDestroyed()) editorWin.destroy();
+  const wa = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
+  const width = Math.round(Math.min(Math.max(wa.width * .8, 900), 1500, wa.width));
+  const height = Math.round(Math.min(Math.max(wa.height * .88, 640), 1050, wa.height));
+  editorWin = new BrowserWindow({
+    x: wa.x + Math.round((wa.width - width) / 2), y: wa.y + Math.round((wa.height - height) / 2), width, height,
+    frame: false, transparent: true, resizable: true, title: 'Drag + Shift',
+    webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
-  win.loadFile('index.html', { query: { mode: 'editor', file, tool } });
+  editorWin.loadFile('index.html', { query: { mode: 'editor', file, tool, lang: settings.lang } });
 }
 
 let helpWin;
@@ -123,7 +144,7 @@ function showHelp() {
     width: 440, height: 420, frame: false, transparent: true, resizable: false, alwaysOnTop: true,
     title: 'Drag + Shift', webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
-  helpWin.loadFile('index.html', { query: { mode: 'help', theme } });
+  helpWin.loadFile('index.html', { query: { mode: 'help', theme, lang: settings.lang } });
 }
 
 function uniquePath(dir, name) {
@@ -140,7 +161,7 @@ ipcMain.handle('save', (_e, dir, name, bytes) => {
   return p;
 });
 ipcMain.handle('read', (_e, p) => new Uint8Array(fs.readFileSync(p)));
-ipcMain.on('editor', (_e, file, tool) => openEditor(file, tool));
+ipcMain.on('editor', (_e, file, tool) => { log('editor', tool, file); openEditor(file, tool); });
 ipcMain.on('hide', hideWheel);
 ipcMain.on('close', e => BrowserWindow.fromWebContents(e.sender)?.close());
 ipcMain.on('notify', (_e, title, file) => {
@@ -159,6 +180,23 @@ function trayIcon() {
   return nativeImage.createFromBitmap(buf, { width: s, height: s });
 }
 
+function buildTray() {
+  const tr = settings.lang === 'tr';
+  tray.setToolTip(tr ? 'Drag + Shift — dosya sürüklerken Shift\'e bas' : 'Drag + Shift — press Shift while dragging a file');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: tr ? 'Drag + Shift açık' : 'Drag + Shift is running', enabled: false },
+    { label: tr ? 'Nasıl kullanılır?' : 'How to use', click: showHelp },
+    { label: tr ? 'Dil' : 'Language', submenu: [
+      { label: 'Türkçe', type: 'radio', checked: tr, click: () => setLang('tr') },
+      { label: 'English', type: 'radio', checked: !tr, click: () => setLang('en') },
+    ] },
+    { label: tr ? 'Windows ile başlat' : 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin,
+      click: i => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--hidden'] }) },
+    { type: 'separator' },
+    { label: tr ? 'Kapat' : 'Quit', click: () => app.quit() },
+  ]));
+}
+
 app.whenReady().then(() => {
   app.setAppUserModelId('app.dragshift');
   // Start with Windows by default (silently, via --hidden); the tray menu can turn it off.
@@ -167,6 +205,7 @@ app.whenReady().then(() => {
     app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] });
     fs.writeFileSync(firstRun, '');
   }
+  loadSettings();
   createWheel();
   startWatching();
   if (process.env.DS_PREVIEW) wheelWin.webContents.once('did-finish-load', () => {
@@ -177,15 +216,7 @@ app.whenReady().then(() => {
     wheelWin.webContents.executeJavaScript(`openWheel(innerWidth/2, innerHeight/2, 'image'); setHover('crop')`);
   });
   tray = new Tray(trayIcon());
-  tray.setToolTip('Drag + Shift — dosya sürüklerken Shift\'e bas');
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Drag + Shift açık', enabled: false },
-    { label: 'Nasıl kullanılır?', click: showHelp },
-    { label: 'Windows ile başlat', type: 'checkbox', checked: app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin,
-      click: i => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--hidden'] }) },
-    { type: 'separator' },
-    { label: 'Kapat', click: () => app.quit() },
-  ]));
+  buildTray();
   tray.on('click', showHelp);
   if (!AT_LOGIN && !process.env.DS_PREVIEW) showHelp();
 });

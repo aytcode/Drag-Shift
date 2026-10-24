@@ -2,7 +2,7 @@
   "name": "drag-shift",
   "productName": "DragShift",
   "author": "aliyigit",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Drag any file, press Shift, drop it on an action.",
   "main": "main.js",
   "scripts": {

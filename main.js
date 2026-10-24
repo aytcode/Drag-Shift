@@ -10,10 +10,28 @@ const koffi = require('koffi');
 // Input is read by polling key state straight from Windows: global hooks are
 // unreliable here (Explorer's drag loop fakes a mouse-up, packaged builds
 // fail to register the hook).
-const GetAsyncKeyState = koffi.load('user32.dll').func('short __stdcall GetAsyncKeyState(int)');
+const user32 = koffi.load('user32.dll');
+const GetAsyncKeyState = user32.func('short __stdcall GetAsyncKeyState(int)');
+const POINT = koffi.struct('POINT', { x: 'long', y: 'long' });
+const GetCursorPos = user32.func('bool __stdcall GetCursorPos(_Out_ POINT *p)');
+const WindowFromPoint = user32.func('void * __stdcall WindowFromPoint(POINT p)');
+const GetAncestor = user32.func('void * __stdcall GetAncestor(void *h, uint flags)');
+const GetClassNameW = user32.func('int __stdcall GetClassNameW(void *h, _Out_ uint16_t *buf, int max)');
 const VK = { LBUTTON: 0x01, SHIFT: 0x10, ESCAPE: 0x1B };
 const isDown = vk => (GetAsyncKeyState(vk) & 0x8000) !== 0;
 const leftHeld = () => isDown(VK.LBUTTON);
+
+// Only drags that start in Explorer or on the desktop count, so Shift keeps its
+// normal meaning everywhere else (selecting text, moving windows, …).
+const FILE_WINDOWS = new Set(['CabinetWClass', 'ExploreWClass', 'Progman', 'WorkerW']);
+function classUnderCursor() {
+  const p = {};
+  if (!GetCursorPos(p)) return '';
+  const top = GetAncestor(WindowFromPoint(p), 2 /* GA_ROOT */);
+  const buf = new Uint16Array(128);
+  const n = GetClassNameW(top, buf, buf.length);
+  return String.fromCharCode(...buf.subarray(0, n));
+}
 
 const WHEEL = 460; // wheel is 372px; the margin leaves room for its shadow
 let wheelWin, tray;
@@ -68,7 +86,11 @@ function startWatching() {
   let mouse = false, shift = false, esc = false, downAt = null, dragging = false;
   setInterval(() => {
     const m = leftHeld(), s = isDown(VK.SHIFT), e = isDown(VK.ESCAPE);
-    if (m && !mouse) { downAt = screen.getCursorScreenPoint(); dragging = false; }
+    if (m && !mouse) {
+      const cls = classUnderCursor();
+      downAt = FILE_WINDOWS.has(cls) ? screen.getCursorScreenPoint() : null; // ignore drags in other apps
+      dragging = false;
+    }
     const wasDragging = dragging;
     if (m && !dragging && downAt) {
       const p = screen.getCursorScreenPoint();

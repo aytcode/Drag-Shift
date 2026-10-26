@@ -11,18 +11,18 @@ Windows için arka planda çalışan küçük bir eklenti: bir dosyayı sürükl
 ## Kullanım
 
 1. Explorer'da ya da masaüstünde bir dosyayı sürüklemeye başla.
-2. Sürüklerken **Shift**'e bas, çark açılır. Tekrar **Shift** → sıradaki çark (ör. Araçlar → Daha fazla → Dönüştür → Dosya).
+2. Sürüklerken **Shift**'e bas, imlecin altında cam bir çark açılır. **›** işaretli dilimler (Dönüştür, Daha fazla, Dosya) üzerinde **Shift**'e bas ya da biraz bekle: seçenekleri dışarı doğru açılır.
 3. Dosyayı bir dilimin üstüne bırak. **Esc** çarkı kapatır. Birden fazla dosya da sürüklenebilir.
 
-| Dosya | Çarklar ve işlemler |
+| Dosya | Çarktaki işlemler (› = Shift ile açılan alt seçenekler) |
 |---|---|
-| PDF | **PDF:** DOCX, JPG, PNG, TXT · **PDF Araçları:** Sayfalara ayır, Döndür, Üstveri temizle, Birleştir (birden fazla PDF) |
-| Görsel | **Araçlar:** Sıkıştır, Üstveri (EXIF/GPS görüntüle & sil), Düzenle, Döndür, İşaretle, Arka plan, Kırp, Gizle · **Daha fazla:** Boyutlandır, Yatay çevir, Siyah-beyaz, PDF (birden fazla görsel → tek PDF) · **Dönüştür:** PNG, JPG, WEBP, ICO, BMP |
-| ZIP | Klasöre çıkar, İçerik listesi, Optimize et (en yüksek sıkıştırma) |
-| Metin (.txt, .md, .csv…) | PDF, DOCX, HTML |
-| **Her dosya** (Dosya çarkı) | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya oluştur, Hash (SHA-256/SHA-1), Base64 |
+| PDF | DOCX, JPG, PNG, TXT, Sayfalara ayır, Birleştir (birden fazla PDF) · **Daha fazla ›** Döndür, Üstveri temizle · **Dosya ›** |
+| Görsel | Kırp, Düzenle, Arka plan, İşaretle, Gizle, Sıkıştır · **Dönüştür ›** PNG, JPG, WEBP, ICO, BMP, PDF (birden fazla görsel → tek PDF) · **Daha fazla ›** Döndür, Yatay çevir, Siyah-beyaz, Boyutlandır, Üstveri (EXIF/GPS) · **Dosya ›** |
+| ZIP | Klasöre çıkar, İçerik listesi, Optimize et, Uzantı, Kopya, Hash, Base64 |
+| Metin (.txt, .md, .csv…) | PDF, DOCX, HTML ve dosya işlemleri |
+| **Dosya ›** (her dosya) | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya oluştur, Hash (SHA-256/SHA-1), Base64 |
 
-Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Arayüz Türkçe (tepsi menüsünden İngilizceye geçilebilir); çark Windows temasını (koyu/açık) ve vurgu rengini kullanır.
+Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Arayüz Türkçe (tepsi menüsünden İngilizceye geçilebilir).
 
 ## Geliştirme
 

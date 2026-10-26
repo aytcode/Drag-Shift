@@ -66,19 +66,45 @@
     font:700 17px/20px sans-serif; text-align:center; transform:scale(0); transition:transform .18s cubic-bezier(.2,1.6,.4,1); }
   .ghost.ok .plus { transform:scale(1); }
 
-  #wheel { position:fixed; z-index:50; pointer-events:none; opacity:0; transform:scale(.55); transition:transform .4s cubic-bezier(.2,1.25,.4,1), opacity .18s; }
-  #wheel.open { opacity:1; transform:scale(1); }
-  #wheel .ring { position:absolute; inset:0; border-radius:50%; background:rgba(255,255,255,.2); backdrop-filter:blur(18px) saturate(1.5);
-    border:1px solid rgba(255,255,255,.5); box-shadow:0 30px 70px rgba(90,25,0,.28), inset 0 1px 0 rgba(255,255,255,.6); }
-  #wheel > svg { position:absolute; inset:0; }
-  .seg { fill:rgba(255,240,228,.9); stroke:rgba(255,240,228,.9); stroke-width:12; stroke-linejoin:round; }
-  .seg.hot { fill:url(#hot); stroke:url(#hot); }
-  .wl { position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:5px;
-    font-weight:700; font-size:11px; letter-spacing:.07em; color:#5b3a28; transition:color .15s, transform .2s; white-space:nowrap; }
-  .wl.hot { color:#fff; transform:translate(-50%,-50%) scale(1.1); }
-  .wc { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); min-width:104px; padding:10px 14px; border-radius:999px; text-align:center;
-    background:rgba(255,234,216,.96); box-shadow:0 4px 14px rgba(120,40,0,.18); font-size:12px; letter-spacing:.07em; color:#5b3a28; line-height:1.3; }
-  .wc small { display:block; font-size:9.5px; font-weight:600; opacity:.65; letter-spacing:.04em; }
+  /* ---- wheel: warm frosted glass (SIZE 652, centre 326, rim radius 216) ---- */
+  #wheel { position:fixed; z-index:50; pointer-events:none; visibility:hidden; opacity:0; will-change:transform,opacity;
+    font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  #wheel .glass { position:absolute; left:70px; top:70px; width:512px; height:512px; clip-path:circle(216px at 50% 50%);
+    filter:blur(22px) saturate(1.9) brightness(1.18); opacity:0; transition:opacity .25s; background-repeat:no-repeat; }
+  #wheel .glass.on { opacity:1; }
+  #wheel .ring { position:absolute; left:110px; top:110px; width:432px; height:432px; border-radius:50%;
+    background:radial-gradient(circle at 50% 28%, rgba(255,250,246,.86), rgba(255,229,212,.8) 72%);
+    backdrop-filter:blur(24px) saturate(1.8);
+    border:1px solid rgba(255,255,255,.75);
+    box-shadow:0 26px 60px rgba(120,40,10,.26), 0 3px 8px rgba(120,40,10,.12), inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -14px 34px rgba(255,160,110,.16); }
+  #wheel .glass.on + .ring { background:radial-gradient(circle at 50% 28%, rgba(255,244,236,.84), rgba(255,212,184,.8) 75%); }
+  #wheel > svg { position:absolute; inset:0; overflow:visible; }
+  #wheel svg.subs { filter:drop-shadow(0 12px 22px rgba(120,40,10,.22)); }
+  .seg { fill:url(#segfill); stroke:url(#segfill); stroke-width:12; stroke-linejoin:round; transition:fill .18s, stroke .18s; }
+  .sg { transition:transform .42s cubic-bezier(.34,1.5,.64,1), opacity .22s; }
+  .sg.hot { transform:translate(var(--dx), var(--dy)); }
+  .sg.hot .seg, .sg.sub.hot .seg { fill:url(#hot); stroke:url(#hot); filter:url(#hotglow); }
+  .sg.open .seg { fill:#ffd9c2; stroke:#ffd9c2; }
+  .sg.sub { opacity:0; transform:scale(.84); transform-origin:326px 326px; transform-box:view-box; }
+  .sg.sub .seg { fill:rgba(255,243,235,.96); stroke:rgba(255,243,235,.96); }
+  #wheel.expanded .sg.sub { opacity:1; transform:none; }
+  .wl { position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; white-space:nowrap;
+    font-weight:650; font-size:11.5px; letter-spacing:.07em; color:#6a3820; text-shadow:0 1px 0 rgba(255,255,255,.55);
+    transition:transform .42s cubic-bezier(.34,1.5,.64,1), color .15s, opacity .22s; }
+  .wl svg.i { width:20px; height:20px; stroke-width:1.7; }
+  .wl.hot { color:#fff; text-shadow:0 1px 2px rgba(150,40,0,.35); transform:translate(calc(-50% + var(--dx,0px)), calc(-50% + var(--dy,0px))) scale(1.06); }
+  .wl.sub { font-size:10.5px; opacity:0; transform:translate(-50%,-50%) scale(.8); }
+  #wheel.expanded .wl.sub { opacity:1; transform:translate(-50%,-50%); }
+  #wheel.expanded .wl.sub.hot { transform:translate(-50%,-50%) scale(1.08); }
+  .wc { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); min-width:118px; max-width:150px; padding:11px 18px; border-radius:999px;
+    text-align:center; background:linear-gradient(180deg,#fffaf6,#ffe7d8); color:#5a2e18; line-height:1.25;
+    box-shadow:inset 0 1px 0 #fff, inset 0 -1px 0 rgba(200,110,60,.15), 0 8px 20px rgba(150,60,20,.22); }
+  .wc b { font-size:13px; letter-spacing:.08em; }
+  .wc small { display:block; font-size:9.5px; font-weight:600; opacity:.6; letter-spacing:.04em; margin-top:1px; }
+  .wc.pulse { animation:wcpulse .32s cubic-bezier(.34,1.6,.64,1); }
+  @keyframes wcpulse { from { transform:translate(-50%,-50%) scale(.92); } }
+  @media (prefers-reduced-motion: reduce) { .sg, .wl, .wc { transition:none !important; animation:none !important; } }
+  @media (prefers-reduced-transparency: reduce) { #wheel .glass { display:none; } #wheel .ring { background:#ffe9dc; backdrop-filter:none; } }
 
   .backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:rgba(50,15,0,.2); backdrop-filter:blur(3px); }
   .modal { width:min(580px,100%); max-height:calc(100vh - 32px); display:flex; flex-direction:column; border-radius:22px; overflow:hidden;
@@ -118,7 +144,7 @@
   table.meta td:first-child { color:var(--muted); width:38%; }
   .warn { color:#c2410c; font-weight:700; }
   .note { font-size:12px; color:var(--muted); margin:8px 0; }
-  .toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200; display:flex; gap:10px; align-items:center;
+  .snack { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200; display:flex; gap:10px; align-items:center;
     background:rgba(35,20,12,.88); color:#fff; padding:10px 16px; border-radius:12px; font-size:13px; max-width:calc(100% - 32px); }
   .spin { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:sp .8s linear infinite; flex:none; }
   @keyframes sp { to { transform:rotate(360deg); } }
@@ -127,18 +153,6 @@
   /* Electron windows: transparent, only the wheel / the tool panel is visible */
   body.desktop { background:transparent; }
   body.desktop #desk, body.desktop .topbar, body.desktop .empty { display:none; }
-  /* overlay wheel: Windows 11 flyout look, system theme + accent colour */
-  body.wheel { font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
-    --w-bg:rgba(32,32,32,.96); --w-seg:#2f2f2f; --w-fg:#e6e6e6; --w-border:rgba(255,255,255,.09); }
-  body.wheel.light { --w-bg:rgba(243,243,243,.97); --w-seg:#ffffff; --w-fg:#1b1b1b; --w-border:rgba(0,0,0,.08); }
-  body.wheel #wheel { transform:scale(.92); transition:transform .18s cubic-bezier(.1,.9,.2,1), opacity .12s; }
-  body.wheel #wheel.open { transform:scale(1); }
-  body.wheel #wheel .ring { background:var(--w-bg); backdrop-filter:none; border:1px solid var(--w-border); box-shadow:0 8px 26px rgba(0,0,0,.32); }
-  body.wheel .seg { fill:var(--w-seg); stroke:var(--w-seg); }
-  body.wheel .seg.hot { fill:url(#hot); stroke:url(#hot); }
-  body.wheel .wl { color:var(--w-fg); font-weight:600; letter-spacing:.04em; }
-  body.wheel .wl.hot { color:#fff; }
-  body.wheel .wc { background:var(--w-seg); color:var(--w-fg); border:1px solid var(--w-border); box-shadow:none; }
   body.editor .backdrop, body.help .backdrop { background:transparent; backdrop-filter:none; padding:0; }
   body.editor .modal, body.help .modal { width:100%; height:100vh; max-height:100vh; animation:none; }
   body.editor .mhead, body.help .mhead { -webkit-app-region:drag; }
@@ -154,6 +168,60 @@
   .helpok { display:flex; align-items:center; gap:8px; font-weight:600; color:#15803d; margin:4px 0 12px; }
   .helpok i { width:9px; height:9px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.2); }
   .steps { margin:0; padding-left:20px; font-size:13px; line-height:1.9; user-select:text; }
+
+  /* ---- warm glass panels (tool windows, help, progress card) ---- */
+  .modal { border-radius:26px; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+    background:linear-gradient(180deg,#ffcfa9 0%,#ffe2cf 16%,#fff1e8 52%,#fff6f1 100%);
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 40px 90px rgba(90,30,5,.32), 0 4px 12px rgba(90,30,5,.12), inset 0 1.5px 0 rgba(255,255,255,.95); }
+  body.editor .modal, body.help .modal { animation:materialize .42s cubic-bezier(.2,.9,.25,1) both; }
+  @keyframes materialize { from { opacity:0; transform:scale(.965); filter:blur(8px); } }
+  .mhead { height:54px; }
+  .mtitle { font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; font-size:15px; font-weight:650; letter-spacing:-.01em; color:#4a2412; }
+  .x { left:16px; top:16px; width:22px; height:22px; background:rgba(120,50,20,.12); color:#6a3820; transition:background .15s, transform .1s; }
+  .x:hover { background:#ff5f57; color:#fff; } .x:active { transform:scale(.92); }
+  .mfoot { padding:14px 20px 16px; border-top:1px solid rgba(160,80,40,.10); }
+  .btn { border-radius:12px; padding:8px 16px; font-weight:600; transition:transform .1s, filter .15s, box-shadow .15s; }
+  .btn:active { transform:scale(.97); }
+  .btn.primary { background:linear-gradient(180deg,#ff8f52,#ee5320 60%,#de4416); box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px rgba(230,80,30,.35); }
+  .btn.soft { background:rgba(255,255,255,.7); box-shadow:inset 0 1px 0 #fff, 0 1px 3px rgba(120,50,20,.12); color:#5a2e18; }
+  .preview { border-radius:18px; padding:16px; box-shadow:inset 0 1px 3px rgba(120,50,20,.12);
+    background:repeating-conic-gradient(rgba(160,90,50,.06) 0 25%, rgba(255,255,255,.55) 0 50%) 0 0/18px 18px; }
+  .preview canvas, .preview > img, .cropstage { box-shadow:0 10px 30px rgba(90,30,5,.18); border-radius:4px; }
+  .row { margin:12px 0; font-size:12.5px; } .row > label { color:#8a5a40; font-weight:500; }
+  .val { color:#8a5a40; }
+  .segc { background:rgba(255,255,255,.62); border-radius:11px; padding:3px; box-shadow:inset 0 1px 2px rgba(120,50,20,.10); }
+  .segc button { border-radius:8px; padding:6px 12px; transition:background .18s, color .18s; }
+  .segc button.on { background:linear-gradient(180deg,#ff8f52,#ee5320); box-shadow:0 2px 6px rgba(230,80,30,.35); }
+  .row input[type=number], .row input[type=text] { border-radius:9px; border:1px solid rgba(160,80,40,.18); background:rgba(255,255,255,.8); padding:6px 9px; font:inherit; color:#4a2412; }
+  input[type=range] { -webkit-appearance:none; appearance:none; height:22px; background:transparent; }
+  input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:4px; background:linear-gradient(90deg,#ee5320,#ff9a5e); opacity:.85; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; margin-top:-8px; border-radius:50%; background:#fff;
+    box-shadow:0 1px 1px rgba(0,0,0,.08), 0 3px 8px rgba(120,40,10,.3); transition:transform .12s; }
+  input[type=range]:active::-webkit-slider-thumb { transform:scale(1.12); }
+  .sw { border-radius:8px; width:34px; height:26px; transition:transform .12s; } .sw:hover { transform:translateY(-1px); }
+  .sw.on { border-color:#fff; box-shadow:0 0 0 2px #ee5320; }
+  body.editor .sidecol { padding:4px 4px 8px; }
+
+  /* progress card */
+  body.toast { background:transparent; }
+  .tcard { position:fixed; left:10px; right:10px; top:10px; padding:16px 18px 16px 18px; border-radius:20px; display:grid; grid-template-columns:auto 1fr auto; gap:6px 14px; align-items:center;
+    background:linear-gradient(180deg,rgba(255,248,243,.97),rgba(255,229,212,.96)); border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 18px 40px rgba(90,30,5,.28), inset 0 1px 0 #fff; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; color:#4a2412;
+    transition:opacity .25s, transform .35s cubic-bezier(.2,.9,.25,1), filter .25s; }
+  .tcard.out { opacity:0; transform:translateY(8px) scale(.97); filter:blur(6px); }
+  .tcard .ic { grid-row:1 / span 2; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff;
+    background:linear-gradient(180deg,#ff8f52,#e2451c); box-shadow:0 4px 10px rgba(230,80,30,.35); }
+  .tcard.error .ic { background:linear-gradient(180deg,#ff6b6b,#d42a2a); }
+  .tcard .tt { font-weight:650; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tcard .ts { font-size:11.5px; color:#8a5a40; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; grid-column:2; }
+  .tcard .bar { grid-column:1 / -1; height:4px; border-radius:4px; background:rgba(160,80,40,.14); overflow:hidden; margin-top:4px; }
+  .tcard .bar i { display:block; height:100%; width:35%; border-radius:4px; background:linear-gradient(90deg,#ff9a5e,#ee5320); animation:indet 1.1s ease-in-out infinite; }
+  .tcard.done .bar i, .tcard.error .bar i { width:100%; animation:none; transition:width .3s; }
+  .tcard.error .bar i { background:#e04848; }
+  @keyframes indet { from { transform:translateX(-100%); } to { transform:translateX(290%); } }
+  .tcard .go { grid-row:1 / span 2; grid-column:3; }
+  .tcard .go[hidden] { display:none; }
 </style>
 </head>
 <body>
@@ -181,13 +249,13 @@ const I18N = {
     Ratio: 'Oran', Brightness: 'Parlaklık', Contrast: 'Kontrast', Saturation: 'Doygunluk', Hue: 'Ton', Grayscale: 'Gri ton',
     Sepia: 'Sepya', Blur: 'Bulanıklık', Free: 'Serbest', Auto: 'Otomatik', Black: 'Siyah', Pixelate: 'Pikselleştir',
     Pen: 'Kalem', Highlight: 'Vurgu', Arrow: 'Ok', Box: 'Kutu',
-    EXTENSION: 'UZANTI', COPY: 'KOPYA', MORE: 'DAHA FAZLA', 'PDF TOOLS': 'PDF ARAÇLARI', SPLIT: 'AYIR', CLEAN: 'TEMİZLE',
+    IMAGE: 'GÖRSEL', EXTENSION: 'UZANTI', COPY: 'KOPYA', MORE: 'DAHA FAZLA', 'PDF TOOLS': 'PDF ARAÇLARI', SPLIT: 'AYIR', CLEAN: 'TEMİZLE',
     MERGE: 'BİRLEŞTİR', EXTRACT: 'ÇIKAR', CONTENTS: 'İÇERİK', OPTIMIZE: 'OPTİMİZE', RESIZE: 'BOYUTLANDIR', FLIP: 'ÇEVİR',
     'B&W': 'SİYAH-BEYAZ', 'Change Extension': 'Uzantıyı Değiştir', 'New extension': 'Yeni uzantı', Resize: 'Boyutlandır',
     Scale: 'Ölçek', Width: 'Genişlik', Height: 'Yükseklik', 'Keep ratio': 'Oranı koru', Copy: 'Kopyala', pages: 'sayfalar',
   },
   en: {
-    'bırak': 'drop', Kapat: 'Close', Kaydet: 'Save', Tamam: 'OK', Boyut: 'Size', Stil: 'Style', Araç: 'Tool', Renk: 'Colour',
+    'bırak': 'drop', 'daha fazlası': 'more options', 'aç': 'open', Göster: 'Show', Kaydedildi: 'Saved', 'İşleniyor…': 'Working…', Kapat: 'Close', Kaydet: 'Save', Tamam: 'OK', Boyut: 'Size', Stil: 'Style', Araç: 'Tool', Renk: 'Colour',
     Kalınlık: 'Thickness', Kalite: 'Quality', 'Maks. kenar': 'Max. edge', Orijinal: 'Original',
     'Gizlemek istediğin alanların üstüne kutu çiz.': 'Draw boxes over the areas you want to hide.',
     'Arka planda çalışıyor': 'Running in the background',
@@ -222,6 +290,9 @@ const ICON = {
   eyeoff: '<path d="M9.9 4.2A10 10 0 0 1 12 4c7 0 10 8 10 8a13 13 0 0 1-1.7 2.7M6.6 6.6A13 13 0 0 0 2 12s3 8 10 8a9.7 9.7 0 0 0 5.4-1.6"/><path d="M2 2l20 20"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   zip: '<path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/>',
   download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  dots: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  convert: '<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
   rename: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
   copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
   hash: '<path d="M5 9h14M5 15h14M10 3L8 21M16 3l-2 18"/>',
@@ -265,7 +336,7 @@ function kindOf(type, name = '') {
 let toastEl = null;
 function toast(msg, spin = false, ms = 0) {
   toastEl?.remove();
-  const el = h('div', { class: 'toast' }, spin ? h('div', { class: 'spin' }) : null, msg);
+  const el = h('div', { class: 'snack' }, spin ? h('div', { class: 'spin' }) : null, msg);
   document.body.append(el); toastEl = el;
   const close = () => { if (toastEl === el) toastEl = null; el.remove(); };
   if (ms) setTimeout(close, ms);
@@ -331,94 +402,193 @@ document.getElementById('add').onclick = () => document.getElementById('picker')
 document.getElementById('picker').onchange = e => { [...e.target.files].forEach(file => addFile(file, file.name)); e.target.value = ''; };
 
 // ---------- radial wheel
-// Every kind ends with the FILE ring; Shift switches rings while dragging.
-const FILE_RING = { title: 'FILE', items: [
-  { id: 'ext', label: 'EXTENSION', icon: 'rename' }, { id: 'zip', label: 'ZIP', icon: 'zip' },
-  { id: 'copy', label: 'COPY', icon: 'copy' }, { id: 'hash', label: 'HASH', icon: 'hash' }, { id: 'base64', label: 'BASE64', icon: 'code' }] };
+// One ring per file kind. A group slice (›) blooms its options into an outer arc:
+// hover it and press Shift, or just rest on it for a moment.
+const A = (id, label, icon) => ({ id, label, icon });
+const G = (id, label, icon, items) => ({ id, label, icon, items });
+const FILE_ITEMS = [A('ext', 'EXTENSION', 'rename'), A('zip', 'ZIP', 'zip'), A('copy', 'COPY', 'copy'), A('hash', 'HASH', 'hash'), A('base64', 'BASE64', 'code')];
 const WHEELS = {
-  pdf: [
-    { title: 'PDF', items: [{ id: 'docx', label: 'DOCX' }, { id: 'jpg', label: 'JPG' }, { id: 'png', label: 'PNG' }, { id: 'txt', label: 'TXT' }] },
-    { title: 'PDF TOOLS', items: [
-      { id: 'split', label: 'SPLIT', icon: 'scissors' }, { id: 'rotpdf', label: 'ROTATE', icon: 'rotate' },
-      { id: 'clean', label: 'CLEAN', icon: 'eraser' }, { id: 'merge', label: 'MERGE', icon: 'merge' }] },
-    FILE_RING,
-  ],
-  image: [
-    { title: 'TOOLS', items: [
-      { id: 'compress', label: 'COMPRESS', icon: 'compress' }, { id: 'metadata', label: 'METADATA', icon: 'tag' },
-      { id: 'edit', label: 'EDIT', icon: 'sliders' }, { id: 'rotate', label: 'ROTATE', icon: 'rotate' },
-      { id: 'annotate', label: 'ANNOTATE', icon: 'pen' }, { id: 'addbg', label: 'ADD BG', icon: 'image' },
-      { id: 'crop', label: 'CROP', icon: 'crop' }, { id: 'redact', label: 'REDACT', icon: 'eyeoff' }] },
-    { title: 'MORE', items: [
-      { id: 'resize', label: 'RESIZE', icon: 'resize' }, { id: 'flip', label: 'FLIP', icon: 'flip' }, { id: 'gray', label: 'B&W', icon: 'gray' },
-      { id: 'to-pdf', label: 'PDF', icon: 'merge' }] },
-    { title: 'CONVERT', items: [{ id: 'to-png', label: 'PNG' }, { id: 'to-jpg', label: 'JPG' }, { id: 'to-webp', label: 'WEBP' },
-      { id: 'to-ico', label: 'ICO' }, { id: 'to-bmp', label: 'BMP' }] },
-    FILE_RING,
-  ],
-  text: [{ title: 'TEXT', items: [{ id: 'pdf', label: 'PDF' }, { id: 'docx', label: 'DOCX' }, { id: 'html', label: 'HTML' }] }, FILE_RING],
-  zip: [{ title: 'ZIP', items: [
-    { id: 'extract', label: 'EXTRACT', icon: 'folder' }, { id: 'list', label: 'CONTENTS', icon: 'list' }, { id: 'repack', label: 'OPTIMIZE', icon: 'compress' }] }, FILE_RING],
-  other: [FILE_RING],
+  pdf: { title: 'PDF', items: [A('docx', 'DOCX'), A('jpg', 'JPG'), A('png', 'PNG'), A('txt', 'TXT'),
+    A('split', 'SPLIT', 'scissors'), A('merge', 'MERGE', 'merge'),
+    G('pdfmore', 'MORE', 'dots', [A('rotpdf', 'ROTATE', 'rotate'), A('clean', 'CLEAN', 'eraser')]),
+    G('file', 'FILE', 'file', FILE_ITEMS)] },
+  image: { title: 'IMAGE', items: [A('crop', 'CROP', 'crop'), A('edit', 'EDIT', 'sliders'), A('addbg', 'ADD BG', 'image'),
+    A('annotate', 'ANNOTATE', 'pen'), A('redact', 'REDACT', 'eyeoff'), A('compress', 'COMPRESS', 'compress'),
+    G('convert', 'CONVERT', 'convert', [A('to-png', 'PNG'), A('to-jpg', 'JPG'), A('to-webp', 'WEBP'), A('to-ico', 'ICO'), A('to-bmp', 'BMP'), A('to-pdf', 'PDF')]),
+    G('more', 'MORE', 'dots', [A('rotate', 'ROTATE', 'rotate'), A('flip', 'FLIP', 'flip'), A('gray', 'B&W', 'gray'), A('resize', 'RESIZE', 'resize'), A('metadata', 'METADATA', 'tag')]),
+    G('file', 'FILE', 'file', FILE_ITEMS)] },
+  text: { title: 'TEXT', items: [A('pdf', 'PDF'), A('docx', 'DOCX'), A('html', 'HTML'), ...FILE_ITEMS] },
+  zip: { title: 'ZIP', items: [A('extract', 'EXTRACT', 'folder'), A('list', 'CONTENTS', 'list'), A('repack', 'OPTIMIZE', 'compress'),
+    A('ext', 'EXTENSION', 'rename'), A('copy', 'COPY', 'copy'), A('hash', 'HASH', 'hash'), A('base64', 'BASE64', 'code')] },
+  other: { title: 'FILE', items: FILE_ITEMS },
 };
-const R2 = 172, R1 = 74, SIZE = (R2 + 14) * 2, C = SIZE / 2;
-const wheel = { el: document.getElementById('wheel'), open: false, modes: null, mode: 0, hover: null, cx: 0, cy: 0 };
+// geometry: main ring R1–R2, glass rim to R2+RIM, option arc RS1–RS2
+const R1 = 84, R2 = 200, RIM = 16, RS1 = R2 + RIM + 8, RS2 = RS1 + 78, SIZE = (RS2 + 24) * 2, C = SIZE / 2;
+const SUB_STEP = 0.4; // radians per option in the outer arc
+const wheel = { el: document.getElementById('wheel'), open: false, def: null, hover: null, hot: null, sub: null, cx: 0, cy: 0 };
 Object.assign(wheel.el.style, { width: SIZE + 'px', height: SIZE + 'px' });
 
+// Tiny spring (Apple-style damping ratio + response). Interruptible: it always starts
+// from the current value and velocity, so re-targeting mid-flight never jumps.
+function springTo(state, target, { response = .35, damping = 1, onFrame, onRest } = {}) {
+  state.target = target;
+  if (state.raf) return;
+  const k = (2 * Math.PI / response) ** 2, c = 4 * Math.PI * damping / response;
+  let last = performance.now();
+  const tick = now => {
+    const dt = Math.min(.032, (now - last) / 1000); last = now;
+    const a = -k * (state.x - state.target) - c * state.v;
+    state.v += a * dt; state.x += state.v * dt;
+    onFrame(state.x);
+    if (Math.abs(state.v) < .001 && Math.abs(state.x - state.target) < .001) { state.x = state.target; state.raf = 0; onFrame(state.x); onRest?.(); return; }
+    state.raf = requestAnimationFrame(tick);
+  };
+  state.raf = requestAnimationFrame(tick);
+}
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const openState = { x: 0, v: 0, raf: 0, target: 0 };
+function paintOpen(p) {
+  const s = reducedMotion.matches ? 1 : .62 + .38 * p;
+  wheel.el.style.transform = `scale(${s})`;
+  wheel.el.style.opacity = clamp(p * 1.4, 0, 1);
+  wheel.el.style.visibility = p < .01 && !wheel.open ? 'hidden' : 'visible';
+}
+
 function openWheel(x, y, kind) {
-  const m = C + 8;
-  wheel.cx = clamp(x, m, Math.max(m, innerWidth - m));
-  wheel.cy = clamp(y, m, Math.max(m, innerHeight - m));
+  wheel.cx = clamp(x, C, Math.max(C, innerWidth - C));
+  wheel.cy = clamp(y, C, Math.max(C, innerHeight - C));
+  if (DESKTOP_MODE === 'wheel') { wheel.cx = x; wheel.cy = y; } // the window is already placed around the cursor
   wheel.el.style.left = wheel.cx - C + 'px';
   wheel.el.style.top = wheel.cy - C + 'px';
-  wheel.modes = WHEELS[kind] || WHEELS.other; wheel.mode = 0;
+  const reopen = wheel.open;
+  wheel.def = WHEELS[kind] || WHEELS.other;
   renderWheel();
   wheel.open = true;
-  requestAnimationFrame(() => wheel.el.classList.add('open'));
+  wheel.el.classList.add('open');
+  if (!reopen) { openState.x = 0; openState.v = 0; }
+  // a little bounce on arrival: the wheel is "thrown" open by the gesture
+  springTo(openState, 1, { response: .42, damping: .72, onFrame: paintOpen });
 }
-function closeWheel() { wheel.open = false; wheel.hover = null; wheel.el.classList.remove('open'); }
-function cycleMode() { if (wheel.modes.length < 2) return; wheel.mode = (wheel.mode + 1) % wheel.modes.length; renderWheel(); }
+function closeWheel() {
+  wheel.open = false; wheel.hover = null; wheel.hot = null; collapseSub();
+  wheel.el.classList.remove('open');
+  springTo(openState, 0, { response: .22, damping: 1, onFrame: paintOpen });
+}
+// Shift while a group is under the pointer opens its options.
+function cycleMode() { if (wheel.hot?.items) expandSub(wheel.hot); }
+
+const polar = (r, a) => [C + r * Math.sin(a), C - r * Math.cos(a)];
+const pt = (r, a) => polar(r, a).map(v => v.toFixed(2)).join(' ');
+function slicePath(r0, r1, a0, a1, gap) {
+  // radii/gap shrunk by half the stroke; the round-joined stroke gives soft corners
+  const ri = r0 + 6, ro = r1 - 6, g = gap + 6, large = a1 - a0 > Math.PI ? 1 : 0;
+  return `M${pt(ro, a0 + g / ro)}A${ro} ${ro} 0 ${large} 1 ${pt(ro, a1 - g / ro)}L${pt(ri, a1 - g / ri)}A${ri} ${ri} 0 ${large} 0 ${pt(ri, a0 + g / ri)}Z`;
+}
+const labelHtml = it => (it.icon ? svgIcon(it.icon) : '') + `<span>${t(it.label)}${it.items ? ' ›' : ''}</span>`;
 function renderWheel() {
-  const mode = wheel.modes[wheel.mode], items = mode.items, n = items.length, step = 2 * Math.PI / n;
-  const pt = (r, a) => `${(C + r * Math.sin(a)).toFixed(2)} ${(C - r * Math.cos(a)).toFixed(2)}`;
-  // radii/gap shrunk by half the stroke width; the round-joined stroke gives the soft corners
-  const ri = R1 + 6, ro = R2 - 6, g = 10;
-  const paths = items.map((it, i) => {
-    let d;
-    if (n === 1) d = `M${C - ro} ${C}a${ro} ${ro} 0 1 0 ${2 * ro} 0a${ro} ${ro} 0 1 0 ${-2 * ro} 0ZM${C - ri} ${C}a${ri} ${ri} 0 1 0 ${2 * ri} 0a${ri} ${ri} 0 1 0 ${-2 * ri} 0Z`;
-    else {
-      const a0 = i * step - step / 2, a1 = i * step + step / 2, large = step > Math.PI ? 1 : 0;
-      d = `M${pt(ro, a0 + g / ro)}A${ro} ${ro} 0 ${large} 1 ${pt(ro, a1 - g / ro)}L${pt(ri, a1 - g / ri)}A${ri} ${ri} 0 ${large} 0 ${pt(ri, a0 + g / ri)}Z`;
-    }
-    return `<path class="seg" fill-rule="evenodd" data-id="${it.id}" d="${d}"/>`;
+  const items = wheel.def.items, n = items.length, step = 2 * Math.PI / n;
+  wheel.step = step;
+  const segs = items.map((it, i) => {
+    const a = i * step, [dx, dy] = [Math.sin(a), -Math.cos(a)];
+    return `<g class="sg" data-id="${it.id}" style="--dx:${dx * 7}px;--dy:${dy * 7}px;transition-delay:${i * 18}ms"><path class="seg" d="${slicePath(R1, R2, a - step / 2, a + step / 2, 4)}"/></g>`;
   }).join('');
-  wheel.el.innerHTML = `<div class="ring"></div><svg viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}"><defs><linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--acc,#ff8c4e)"/><stop offset="1" style="stop-color:var(--acc2,#df4318)"/></linearGradient></defs>${paths}</svg>`;
-  const r = (R1 + R2) / 2 + 4;
-  items.forEach((it, i) => wheel.el.append(h('div', { class: 'wl', 'data-id': it.id,
-    style: { left: C + r * Math.sin(i * step) + 'px', top: C - r * Math.cos(i * step) + 'px' },
-    html: (it.icon ? svgIcon(it.icon) : '') + `<span>${t(it.label)}</span>` })));
+  wheel.el.innerHTML = `
+    <div class="glass"></div><div class="ring"></div>
+    <svg class="main" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}">
+      <defs>
+        <radialGradient id="segfill" cx="${C}" cy="${C}" r="${R2}" gradientUnits="userSpaceOnUse">
+          <stop offset="${R1 / R2}" stop-color="#fff7f1" stop-opacity=".97"/><stop offset="1" stop-color="#ffe0cb" stop-opacity=".94"/></radialGradient>
+        <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9858"/><stop offset=".55" stop-color="#f4622b"/><stop offset="1" stop-color="#d93d16"/></linearGradient>
+        <filter id="hotglow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#e2451c" flood-opacity=".45"/></filter>
+      </defs>${segs}</svg>
+    <svg class="subs" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}"></svg>`;
+  const r = (R1 + R2) / 2 + 6;
+  items.forEach((it, i) => {
+    const [x, y] = polar(r, i * step);
+    wheel.el.append(h('div', { class: 'wl', 'data-id': it.id, style: { left: x + 'px', top: y + 'px', '--dx': Math.sin(i * step) * 7 + 'px', '--dy': -Math.cos(i * step) * 7 + 'px', transitionDelay: i * 18 + 'ms' }, html: labelHtml(it) }));
+  });
+  wheel.subLabels = h('div', { class: 'sublabels' });
   wheel.center = h('div', { class: 'wc' });
-  wheel.el.append(wheel.center);
-  setHover(null, true);
+  wheel.el.append(wheel.subLabels, wheel.center);
+  wheel.sub = null; wheel.hot = null; wheel.hover = null;
+  setCenter();
+  if (wheel.glassUrl) setGlass(wheel.glassUrl);
 }
-function setHover(id, force) {
-  if (id === wheel.hover && !force) return;
-  wheel.hover = id;
+// Real frosted glass in the desktop app: a snapshot of the screen behind the wheel, blurred.
+function setGlass(url) {
+  wheel.glassUrl = url;
+  const g = wheel.el.querySelector('.glass');
+  if (!g) return;
+  // the snapshot covers the whole window; line it up with the glass box (512px, centred on the wheel)
+  Object.assign(g.style, { backgroundImage: `url(${url})`, backgroundSize: `${innerWidth}px ${innerHeight}px`, backgroundPosition: `${256 - wheel.cx}px ${256 - wheel.cy}px` });
+  g.classList.add('on');
+}
+function setCenter(it) {
+  const hint = wheel.def.items.some(i => i.items) ? `<small>⇧ ${t('daha fazlası')}</small>` : `<small>${t('bırak')}</small>`;
+  wheel.center.innerHTML = it ? `<b>${t(it.label)}</b>${it.items ? `<small>⇧ ${t('aç')}</small>` : ''}` : `<b>${t(wheel.def.title)}</b>${hint}`;
+  wheel.center.classList.remove('pulse'); void wheel.center.offsetWidth; wheel.center.classList.add('pulse');
+}
+function expandSub(group) {
+  if (wheel.sub?.group === group) return;
+  collapseSub(true);
+  const i = wheel.def.items.indexOf(group), ga = i * wheel.step, n = group.items.length;
+  const a0 = ga - n * SUB_STEP / 2;
+  wheel.sub = { group, a0, n };
+  const svg = wheel.el.querySelector('svg.subs');
+  svg.innerHTML = group.items.map((it, k) => `<g class="sg sub" data-id="${it.id}" style="transition-delay:${k * 28}ms"><path class="seg" d="${slicePath(RS1, RS2, a0 + k * SUB_STEP, a0 + (k + 1) * SUB_STEP, 3)}"/></g>`).join('');
+  wheel.subLabels.innerHTML = '';
+  group.items.forEach((it, k) => {
+    const [x, y] = polar((RS1 + RS2) / 2, a0 + (k + .5) * SUB_STEP);
+    wheel.subLabels.append(h('div', { class: 'wl sub', 'data-id': it.id, style: { left: x + 'px', top: y + 'px', transitionDelay: k * 28 + 'ms' }, html: labelHtml(it) }));
+  });
+  // bloom outward from the group slice (origin = wheel centre, so options grow toward the pointer)
+  requestAnimationFrame(() => wheel.el.classList.add('expanded'));
+  wheel.el.querySelector(`.sg[data-id="${group.id}"]`)?.classList.add('open');
+}
+function collapseSub(instant) {
+  if (!wheel.sub) return;
+  wheel.el.querySelector('.sg.open')?.classList.remove('open');
+  wheel.el.classList.remove('expanded');
+  wheel.sub = null;
+  const svg = wheel.el.querySelector('svg.subs'), labels = wheel.subLabels;
+  const clear = () => { if (!wheel.sub) { svg.innerHTML = ''; labels.innerHTML = ''; } };
+  if (instant) clear(); else setTimeout(clear, 180);
+}
+function setHot(id) {
   wheel.el.querySelectorAll('[data-id]').forEach(el => el.classList.toggle('hot', el.dataset.id === id));
-  const mode = wheel.modes[wheel.mode], it = mode.items.find(i => i.id === id);
-  const other = wheel.modes.length > 1 ? `<small>⇧ ${t(wheel.modes[(wheel.mode + 1) % wheel.modes.length].title)}</small>` : `<small>${t('bırak')}</small>`;
-  wheel.center.innerHTML = it ? `<b>${t(it.label)}</b>` : `<b>${t(mode.title)}</b>${other}`;
+}
+function setHover(id) {
+  wheel.hover = id;
 }
 function hitWheel(x, y) {
   const dx = x - wheel.cx, dy = y - wheel.cy, d = Math.hypot(dx, dy);
-  if (d < R1 - 4 || d > R2 + 70) return null;
-  const items = wheel.modes[wheel.mode].items, step = 2 * Math.PI / items.length;
   let a = Math.atan2(dx, -dy); if (a < 0) a += 2 * Math.PI;
-  return items[Math.floor(((a + step / 2) % (2 * Math.PI)) / step)].id;
+  if (wheel.sub) {
+    let rel = a - wheel.sub.a0; rel = ((rel % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const k = Math.floor(rel / SUB_STEP), inSpan = rel < wheel.sub.n * SUB_STEP + .12 || rel > 2 * Math.PI - .12;
+    if (d > R2 + 4 && d < RS2 + 40 && k >= 0 && k < wheel.sub.n) return { sub: wheel.sub.group.items[k] };
+    // heading out toward the open options across a neighbouring slice: stay on the group
+    if (inSpan && d > R2 - 56 && d <= R2 + 4) return { item: wheel.sub.group };
+  }
+  if (d < R1 - 6 || d > R2 + 50) return null;
+  const items = wheel.def.items;
+  return { item: items[Math.floor(((a + wheel.step / 2) % (2 * Math.PI)) / wheel.step)] };
 }
+let dwell;
 function updateHover(x, y) {
   if (!wheel.open) return;
-  setHover(hitWheel(x, y));
+  const hit = hitWheel(x, y);
+  const it = hit?.sub || hit?.item || null;
+  if (hit?.item && wheel.sub && hit.item !== wheel.sub.group) collapseSub();
+  if (it !== wheel.hot) {
+    wheel.hot = it;
+    clearTimeout(dwell);
+    if (it?.items) dwell = setTimeout(() => wheel.hot === it && expandSub(it), 420); // resting on a group opens it
+    setHot(it?.id ?? null);
+    if (wheel.sub && !it?.items && hit?.sub) wheel.el.querySelector(`.sg[data-id="${wheel.sub.group.id}"]`)?.classList.add('open');
+    setCenter(it || undefined);
+  }
+  setHover(it && !it.items ? it.id : null);
   drag?.ghost?.classList.toggle('ok', !!wheel.hover);
 }
 
@@ -1268,17 +1438,12 @@ if (DESKTOP_MODE) document.body.classList.add('desktop', DESKTOP_MODE);
 if (DESKTOP_MODE && DESKTOP_MODE !== 'wheel') for (const ev of ['dragover', 'drop']) window.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; });
 
 if (DESKTOP_MODE === 'wheel') {
-  const D = window.desktop, q = new URLSearchParams(location.search);
-  if (q.get('theme') === 'light') document.body.classList.add('light');
-  const acc = q.get('accent');
-  if (/^[0-9a-f]{6}/i.test(acc)) {
-    const darker = '#' + [0, 2, 4].map(i => Math.round(parseInt(acc.slice(i, i + 2), 16) * .78).toString(16).padStart(2, '0')).join('');
-    document.documentElement.style.setProperty('--acc', '#' + acc.slice(0, 6));
-    document.documentElement.style.setProperty('--acc2', darker);
-  }
-  let kind = null;
-  const show = k => { kind = k; openWheel(innerWidth / 2, innerHeight / 2, k); };
-  D.onShow(() => show('other'));
+  const D = window.desktop;
+  let kind = null, at = { x: innerWidth / 2, y: innerHeight / 2 };
+  const show = k => { kind = k; openWheel(at.x, at.y, k); };
+  // main places the window around the cursor (kept on screen) and tells us where the cursor is in it
+  D.onShow(info => { at = { x: info?.cx ?? innerWidth / 2, y: info?.cy ?? innerHeight / 2 }; wheel.glassUrl = info?.glass || null; show('other'); });
+  D.onGlass(url => setGlass(url));
   D.onHide(closeWheel);
   D.onCycle(() => { if (wheel.open) cycleMode(); });
   const over = e => {
@@ -1299,7 +1464,9 @@ if (DESKTOP_MODE === 'wheel') {
     const items = list.map(({ file, path }) => ({ path, name: file.name, blob: file, kind: kindOf(file.type, file.name) }))
       .filter(f => ACTIONS[f.kind]?.[act]);
     if (!items.length) return;
+    const all = wheel.def.items.flatMap(i => i.items || [i]), label = t(all.find(i => i.id === act)?.label || act);
     const run = async (a, arg, path) => {
+      D.progress({ state: 'working', title: label, sub: t('İşleniyor…') });
       try {
         const fs = [].concat(arg);
         fs.forEach(f => f.url = URL.createObjectURL(f.blob));
@@ -1314,6 +1481,25 @@ if (DESKTOP_MODE === 'wheel') {
       const a = ACTIONS[f.kind][act];
       if (a.modal) D.openEditor(f.path, act); else await run(a, f, f.path);
     }
+  });
+}
+
+if (DESKTOP_MODE === 'toast') {
+  const ic = h('div', { class: 'ic', html: svgIcon('convert') }), tt = h('div', { class: 'tt' }), ts = h('div', { class: 'ts' });
+  const go = h('button', { class: 'btn soft go', hidden: '' }, t('Göster')), bar = h('div', { class: 'bar' }, h('i'));
+  const card = h('div', { class: 'tcard out' }, ic, tt, go, ts, bar);
+  document.body.append(card);
+  let file = null;
+  go.onclick = () => file && window.desktop.reveal(file);
+  window.desktop.onProgress(s => {
+    if (s.state === 'hide') { card.classList.add('out'); setTimeout(() => window.desktop.toastHidden(), 300); return; }
+    card.classList.remove('working', 'done', 'error', 'out');
+    card.classList.add(s.state);
+    file = s.file || null;
+    ic.innerHTML = s.state === 'working' ? svgIcon('convert') : s.state === 'error' ? '<b>!</b>' : '<b>✓</b>';
+    tt.textContent = s.state === 'done' ? (s.title || '').replace(/^✓\s*/, '') : s.title || '';
+    ts.textContent = s.state === 'working' ? s.sub || '' : s.state === 'done' ? t('Kaydedildi') + (file ? ' · ' + file.replace(/[\\/][^\\/]*$/, '') : '') : '';
+    go.hidden = !file;
   });
 }
 

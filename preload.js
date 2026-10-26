@@ -9,7 +9,12 @@ contextBridge.exposeInMainWorld('desktop', {
   hide: () => ipcRenderer.send('hide'),
   close: () => ipcRenderer.send('close'),
   notify: (title, path) => ipcRenderer.send('notify', title, path),
-  onShow: cb => ipcRenderer.on('wheel:show', () => cb()),
+  progress: state => ipcRenderer.send('progress', state),
+  reveal: path => ipcRenderer.send('reveal', path),
+  toastHidden: () => ipcRenderer.send('toast-hidden'),
+  onShow: cb => ipcRenderer.on('wheel:show', (_e, info) => cb(info)),
+  onGlass: cb => ipcRenderer.on('wheel:glass', (_e, url) => cb(url)),
+  onProgress: cb => ipcRenderer.on('toast:state', (_e, s) => cb(s)),
   onHide: cb => ipcRenderer.on('wheel:hide', () => cb()),
   onCycle: cb => ipcRenderer.on('wheel:cycle', () => cb()),
 });

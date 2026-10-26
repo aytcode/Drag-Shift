@@ -10,17 +10,17 @@
 <script src="node_modules/jszip/dist/jszip.min.js"></script>
 <script src="node_modules/pdf-lib/dist/pdf-lib.min.js"></script>
 <style>
-  :root { --accent:#ee5320; --ink:#3d2418; --muted:#8a6a58; }
+  :root { --accent:#1f7aff; --ink:#1b2f4f; --muted:#4d6a92; }
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; overflow:hidden; }
   body {
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;
     color:var(--ink); user-select:none; -webkit-user-select:none;
     background:
-      radial-gradient(60% 70% at 12% 40%, #ec4a37 0, transparent 70%),
-      radial-gradient(50% 60% at 72% 10%, #f4b23e 0, transparent 70%),
+      radial-gradient(60% 70% at 12% 40%, #2f62ff 0, transparent 70%),
+      radial-gradient(50% 60% at 72% 10%, #3fc1ff 0, transparent 70%),
       radial-gradient(55% 55% at 88% 98%, #8f86e0 0, transparent 70%),
-      linear-gradient(135deg, #ee5a3d, #f0a046 55%, #c47fb4);
+      linear-gradient(135deg, #2453d6, #3a9bff 55%, #7d73e6);
   }
   svg.i { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 
@@ -31,7 +31,7 @@
   kbd { font:600 11px inherit; padding:2px 6px; border-radius:5px; background:rgba(255,255,255,.3); border:1px solid rgba(255,255,255,.4); }
   .btn { border:0; border-radius:9px; padding:7px 13px; font:600 13px/1.2 inherit; font-family:inherit; cursor:pointer; background:rgba(255,255,255,.85); color:var(--ink); }
   .btn:hover { filter:brightness(1.04); }
-  .btn.primary { background:linear-gradient(180deg,#ff7a3d,#e9491a); color:#fff; box-shadow:0 2px 8px rgba(233,73,26,.35); }
+  .btn.primary { background:linear-gradient(180deg,#4d9dff,#0b62e6); color:#fff; box-shadow:0 2px 8px rgba(30,110,240,.35); }
   .btn.soft { background:rgba(255,255,255,.55); }
   .btn:disabled { opacity:.6; cursor:default; }
 
@@ -70,46 +70,46 @@
   #wheel { position:fixed; z-index:50; pointer-events:none; visibility:hidden; opacity:0; will-change:transform,opacity;
     font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
   #wheel .glass { position:absolute; left:70px; top:70px; width:512px; height:512px; clip-path:circle(216px at 50% 50%);
-    filter:blur(22px) saturate(1.9) brightness(1.18); opacity:0; transition:opacity .25s; background-repeat:no-repeat; }
+    opacity:0; transition:opacity .25s; background-repeat:no-repeat; }
   #wheel .glass.on { opacity:1; }
   #wheel .ring { position:absolute; left:110px; top:110px; width:432px; height:432px; border-radius:50%;
-    background:radial-gradient(circle at 50% 28%, rgba(255,250,246,.86), rgba(255,229,212,.8) 72%);
+    background:radial-gradient(circle at 50% 28%, rgba(246,250,255,.88), rgba(214,230,255,.82) 72%);
     backdrop-filter:blur(24px) saturate(1.8);
     border:1px solid rgba(255,255,255,.75);
-    box-shadow:0 26px 60px rgba(120,40,10,.26), 0 3px 8px rgba(120,40,10,.12), inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -14px 34px rgba(255,160,110,.16); }
-  #wheel .glass.on + .ring { background:radial-gradient(circle at 50% 28%, rgba(255,244,236,.84), rgba(255,212,184,.8) 75%); }
+    box-shadow:0 26px 60px rgba(10,40,120,.26), 0 3px 8px rgba(10,40,120,.12), inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -14px 34px rgba(120,170,255,.16); }
+  #wheel .glass.on + .ring { background:radial-gradient(circle at 50% 28%, rgba(240,247,255,.84), rgba(196,220,255,.78) 75%); }
   #wheel > svg { position:absolute; inset:0; overflow:visible; }
-  #wheel svg.subs { filter:drop-shadow(0 12px 22px rgba(120,40,10,.22)); }
+  #wheel svg.subs { filter:drop-shadow(0 12px 22px rgba(10,40,120,.22)); }
   .seg { fill:url(#segfill); stroke:url(#segfill); stroke-width:12; stroke-linejoin:round; transition:fill .18s, stroke .18s; }
   .sg { transition:transform .42s cubic-bezier(.34,1.5,.64,1), opacity .22s; }
   .sg.hot { transform:translate(var(--dx), var(--dy)); }
   .sg.hot .seg, .sg.sub.hot .seg { fill:url(#hot); stroke:url(#hot); filter:url(#hotglow); }
-  .sg.open .seg { fill:#ffd9c2; stroke:#ffd9c2; }
+  .sg.open .seg { fill:#d6e6ff; stroke:#d6e6ff; }
   .sg.sub { opacity:0; transform:scale(.84); transform-origin:326px 326px; transform-box:view-box; }
-  .sg.sub .seg { fill:rgba(255,243,235,.96); stroke:rgba(255,243,235,.96); }
+  .sg.sub .seg { fill:rgba(242,247,255,.96); stroke:rgba(242,247,255,.96); }
   #wheel.expanded .sg.sub { opacity:1; transform:none; }
   .wl { position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; white-space:nowrap;
-    font-weight:650; font-size:11.5px; letter-spacing:.07em; color:#6a3820; text-shadow:0 1px 0 rgba(255,255,255,.55);
+    font-weight:650; font-size:11.5px; letter-spacing:.07em; color:#24406b; text-shadow:0 1px 0 rgba(255,255,255,.55);
     transition:transform .42s cubic-bezier(.34,1.5,.64,1), color .15s, opacity .22s; }
   .wl svg.i { width:20px; height:20px; stroke-width:1.7; }
-  .wl.hot { color:#fff; text-shadow:0 1px 2px rgba(150,40,0,.35); transform:translate(calc(-50% + var(--dx,0px)), calc(-50% + var(--dy,0px))) scale(1.06); }
+  .wl.hot { color:#fff; text-shadow:0 1px 2px rgba(0,40,140,.35); transform:translate(calc(-50% + var(--dx,0px)), calc(-50% + var(--dy,0px))) scale(1.06); }
   .wl.sub { font-size:10.5px; opacity:0; transform:translate(-50%,-50%) scale(.8); }
   #wheel.expanded .wl.sub { opacity:1; transform:translate(-50%,-50%); }
   #wheel.expanded .wl.sub.hot { transform:translate(-50%,-50%) scale(1.08); }
   .wc { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); min-width:118px; max-width:150px; padding:11px 18px; border-radius:999px;
-    text-align:center; background:linear-gradient(180deg,#fffaf6,#ffe7d8); color:#5a2e18; line-height:1.25;
-    box-shadow:inset 0 1px 0 #fff, inset 0 -1px 0 rgba(200,110,60,.15), 0 8px 20px rgba(150,60,20,.22); }
+    text-align:center; background:linear-gradient(180deg,#ffffff,#e4efff); color:#1f3a63; line-height:1.25;
+    box-shadow:inset 0 1px 0 #fff, inset 0 -1px 0 rgba(60,110,200,.15), 0 8px 20px rgba(20,60,150,.22); }
   .wc b { font-size:13px; letter-spacing:.08em; }
   .wc small { display:block; font-size:9.5px; font-weight:600; opacity:.6; letter-spacing:.04em; margin-top:1px; }
   .wc.pulse { animation:wcpulse .32s cubic-bezier(.34,1.6,.64,1); }
   @keyframes wcpulse { from { transform:translate(-50%,-50%) scale(.92); } }
   @media (prefers-reduced-motion: reduce) { .sg, .wl, .wc { transition:none !important; animation:none !important; } }
-  @media (prefers-reduced-transparency: reduce) { #wheel .glass { display:none; } #wheel .ring { background:#ffe9dc; backdrop-filter:none; } }
+  @media (prefers-reduced-transparency: reduce) { #wheel .glass { display:none; } #wheel .ring { background:#e6f0ff; backdrop-filter:none; } }
 
-  .backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:rgba(50,15,0,.2); backdrop-filter:blur(3px); }
+  .backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:rgba(0,15,50,.2); backdrop-filter:blur(3px); }
   .modal { width:min(580px,100%); max-height:calc(100vh - 32px); display:flex; flex-direction:column; border-radius:22px; overflow:hidden;
-    background:linear-gradient(180deg,rgba(255,210,165,.95),rgba(255,236,222,.97)); border:1px solid rgba(255,255,255,.7);
-    box-shadow:0 40px 90px rgba(80,20,0,.35); animation:pop .35s cubic-bezier(.2,1.2,.4,1); user-select:none; }
+    background:linear-gradient(180deg,rgba(188,216,255,.95),rgba(238,245,255,.97)); border:1px solid rgba(255,255,255,.7);
+    box-shadow:0 40px 90px rgba(0,20,80,.35); animation:pop .35s cubic-bezier(.2,1.2,.4,1); user-select:none; }
   .mhead { position:relative; height:46px; display:grid; place-items:center; flex:none; }
   .mtitle { font-weight:700; font-size:14px; }
   .x { position:absolute; left:14px; top:12px; width:22px; height:22px; border-radius:50%; border:0; background:rgba(0,0,0,.08); color:var(--ink); cursor:pointer; font-size:15px; line-height:20px; padding:0; }
@@ -125,7 +125,7 @@
   .val { width:64px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums; }
   .row input[type=number] { width:80px; padding:5px 8px; border-radius:7px; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.7); font:inherit; color:var(--ink); }
   .segc { display:inline-flex; flex-wrap:wrap; background:rgba(255,255,255,.55); border-radius:9px; padding:2px; }
-  .segc button { border:0; background:none; padding:5px 11px; border-radius:7px; font:600 12px inherit; font-family:inherit; color:#6b4a38; cursor:pointer; }
+  .segc button { border:0; background:none; padding:5px 11px; border-radius:7px; font:600 12px inherit; font-family:inherit; color:#3d5a82; cursor:pointer; }
   .segc button.on { background:var(--accent); color:#fff; }
   .swatches { display:flex; flex-wrap:wrap; gap:6px; flex:1; }
   .sw { width:32px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(0,0,0,.1); padding:0; }
@@ -145,7 +145,7 @@
   .warn { color:#c2410c; font-weight:700; }
   .note { font-size:12px; color:var(--muted); margin:8px 0; }
   .snack { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200; display:flex; gap:10px; align-items:center;
-    background:rgba(35,20,12,.88); color:#fff; padding:10px 16px; border-radius:12px; font-size:13px; max-width:calc(100% - 32px); }
+    background:rgba(12,20,35,.88); color:#fff; padding:10px 16px; border-radius:12px; font-size:13px; max-width:calc(100% - 32px); }
   .spin { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:sp .8s linear infinite; flex:none; }
   @keyframes sp { to { transform:rotate(360deg); } }
   @media (max-width:640px) { .topbar .hint { display:none; } }
@@ -171,52 +171,52 @@
 
   /* ---- warm glass panels (tool windows, help, progress card) ---- */
   .modal { border-radius:26px; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
-    background:linear-gradient(180deg,#ffcfa9 0%,#ffe2cf 16%,#fff1e8 52%,#fff6f1 100%);
+    background:linear-gradient(180deg,#bcd8ff 0%,#d9e9ff 16%,#eef5ff 52%,#f6faff 100%);
     border:1px solid rgba(255,255,255,.85);
-    box-shadow:0 40px 90px rgba(90,30,5,.32), 0 4px 12px rgba(90,30,5,.12), inset 0 1.5px 0 rgba(255,255,255,.95); }
+    box-shadow:0 40px 90px rgba(5,30,90,.32), 0 4px 12px rgba(5,30,90,.12), inset 0 1.5px 0 rgba(255,255,255,.95); }
   body.editor .modal, body.help .modal { animation:materialize .42s cubic-bezier(.2,.9,.25,1) both; }
   @keyframes materialize { from { opacity:0; transform:scale(.965); filter:blur(8px); } }
   .mhead { height:54px; }
-  .mtitle { font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; font-size:15px; font-weight:650; letter-spacing:-.01em; color:#4a2412; }
-  .x { left:16px; top:16px; width:22px; height:22px; background:rgba(120,50,20,.12); color:#6a3820; transition:background .15s, transform .1s; }
+  .mtitle { font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; font-size:15px; font-weight:650; letter-spacing:-.01em; color:#1b2f4f; }
+  .x { left:16px; top:16px; width:22px; height:22px; background:rgba(20,50,120,.12); color:#24406b; transition:background .15s, transform .1s; }
   .x:hover { background:#ff5f57; color:#fff; } .x:active { transform:scale(.92); }
-  .mfoot { padding:14px 20px 16px; border-top:1px solid rgba(160,80,40,.10); }
+  .mfoot { padding:14px 20px 16px; border-top:1px solid rgba(40,80,160,.10); }
   .btn { border-radius:12px; padding:8px 16px; font-weight:600; transition:transform .1s, filter .15s, box-shadow .15s; }
   .btn:active { transform:scale(.97); }
-  .btn.primary { background:linear-gradient(180deg,#ff8f52,#ee5320 60%,#de4416); box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px rgba(230,80,30,.35); }
-  .btn.soft { background:rgba(255,255,255,.7); box-shadow:inset 0 1px 0 #fff, 0 1px 3px rgba(120,50,20,.12); color:#5a2e18; }
-  .preview { border-radius:18px; padding:16px; box-shadow:inset 0 1px 3px rgba(120,50,20,.12);
-    background:repeating-conic-gradient(rgba(160,90,50,.06) 0 25%, rgba(255,255,255,.55) 0 50%) 0 0/18px 18px; }
-  .preview canvas, .preview > img, .cropstage { box-shadow:0 10px 30px rgba(90,30,5,.18); border-radius:4px; }
-  .row { margin:12px 0; font-size:12.5px; } .row > label { color:#8a5a40; font-weight:500; }
-  .val { color:#8a5a40; }
-  .segc { background:rgba(255,255,255,.62); border-radius:11px; padding:3px; box-shadow:inset 0 1px 2px rgba(120,50,20,.10); }
+  .btn.primary { background:linear-gradient(180deg,#5aa8ff,#1f7aff 60%,#0b62e6); box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px rgba(30,110,240,.35); }
+  .btn.soft { background:rgba(255,255,255,.7); box-shadow:inset 0 1px 0 #fff, 0 1px 3px rgba(20,50,120,.12); color:#1f3a63; }
+  .preview { border-radius:18px; padding:16px; box-shadow:inset 0 1px 3px rgba(20,50,120,.12);
+    background:repeating-conic-gradient(rgba(50,90,160,.06) 0 25%, rgba(255,255,255,.55) 0 50%) 0 0/18px 18px; }
+  .preview canvas, .preview > img, .cropstage { box-shadow:0 10px 30px rgba(5,30,90,.18); border-radius:4px; }
+  .row { margin:12px 0; font-size:12.5px; } .row > label { color:#4d6a92; font-weight:500; }
+  .val { color:#4d6a92; }
+  .segc { background:rgba(255,255,255,.62); border-radius:11px; padding:3px; box-shadow:inset 0 1px 2px rgba(20,50,120,.10); }
   .segc button { border-radius:8px; padding:6px 12px; transition:background .18s, color .18s; }
-  .segc button.on { background:linear-gradient(180deg,#ff8f52,#ee5320); box-shadow:0 2px 6px rgba(230,80,30,.35); }
-  .row input[type=number], .row input[type=text] { border-radius:9px; border:1px solid rgba(160,80,40,.18); background:rgba(255,255,255,.8); padding:6px 9px; font:inherit; color:#4a2412; }
+  .segc button.on { background:linear-gradient(180deg,#5aa8ff,#1f7aff); box-shadow:0 2px 6px rgba(30,110,240,.35); }
+  .row input[type=number], .row input[type=text] { border-radius:9px; border:1px solid rgba(40,80,160,.18); background:rgba(255,255,255,.8); padding:6px 9px; font:inherit; color:#1b2f4f; }
   input[type=range] { -webkit-appearance:none; appearance:none; height:22px; background:transparent; }
-  input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:4px; background:linear-gradient(90deg,#ee5320,#ff9a5e); opacity:.85; }
+  input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:4px; background:linear-gradient(90deg,#1f7aff,#6cb4ff); opacity:.85; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; margin-top:-8px; border-radius:50%; background:#fff;
-    box-shadow:0 1px 1px rgba(0,0,0,.08), 0 3px 8px rgba(120,40,10,.3); transition:transform .12s; }
+    box-shadow:0 1px 1px rgba(0,0,0,.08), 0 3px 8px rgba(10,40,120,.3); transition:transform .12s; }
   input[type=range]:active::-webkit-slider-thumb { transform:scale(1.12); }
   .sw { border-radius:8px; width:34px; height:26px; transition:transform .12s; } .sw:hover { transform:translateY(-1px); }
-  .sw.on { border-color:#fff; box-shadow:0 0 0 2px #ee5320; }
+  .sw.on { border-color:#fff; box-shadow:0 0 0 2px #1f7aff; }
   body.editor .sidecol { padding:4px 4px 8px; }
 
   /* progress card */
   body.toast { background:transparent; }
   .tcard { position:fixed; left:10px; right:10px; top:10px; padding:16px 18px 16px 18px; border-radius:20px; display:grid; grid-template-columns:auto 1fr auto; gap:6px 14px; align-items:center;
-    background:linear-gradient(180deg,rgba(255,248,243,.97),rgba(255,229,212,.96)); border:1px solid rgba(255,255,255,.85);
-    box-shadow:0 18px 40px rgba(90,30,5,.28), inset 0 1px 0 #fff; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; color:#4a2412;
+    background:linear-gradient(180deg,rgba(246,250,255,.97),rgba(214,230,255,.96)); border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 18px 40px rgba(5,30,90,.28), inset 0 1px 0 #fff; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; color:#1b2f4f;
     transition:opacity .25s, transform .35s cubic-bezier(.2,.9,.25,1), filter .25s; }
   .tcard.out { opacity:0; transform:translateY(8px) scale(.97); filter:blur(6px); }
   .tcard .ic { grid-row:1 / span 2; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff;
-    background:linear-gradient(180deg,#ff8f52,#e2451c); box-shadow:0 4px 10px rgba(230,80,30,.35); }
+    background:linear-gradient(180deg,#5aa8ff,#0b62e6); box-shadow:0 4px 10px rgba(30,110,240,.35); }
   .tcard.error .ic { background:linear-gradient(180deg,#ff6b6b,#d42a2a); }
   .tcard .tt { font-weight:650; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .tcard .ts { font-size:11.5px; color:#8a5a40; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; grid-column:2; }
-  .tcard .bar { grid-column:1 / -1; height:4px; border-radius:4px; background:rgba(160,80,40,.14); overflow:hidden; margin-top:4px; }
-  .tcard .bar i { display:block; height:100%; width:35%; border-radius:4px; background:linear-gradient(90deg,#ff9a5e,#ee5320); animation:indet 1.1s ease-in-out infinite; }
+  .tcard .ts { font-size:11.5px; color:#4d6a92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; grid-column:2; }
+  .tcard .bar { grid-column:1 / -1; height:4px; border-radius:4px; background:rgba(40,80,160,.14); overflow:hidden; margin-top:4px; }
+  .tcard .bar i { display:block; height:100%; width:35%; border-radius:4px; background:linear-gradient(90deg,#6cb4ff,#1f7aff); animation:indet 1.1s ease-in-out infinite; }
   .tcard.done .bar i, .tcard.error .bar i { width:100%; animation:none; transition:width .3s; }
   .tcard.error .bar i { background:#e04848; }
   @keyframes indet { from { transform:translateX(-100%); } to { transform:translateX(290%); } }
@@ -424,7 +424,7 @@ const WHEELS = {
 };
 // geometry: main ring R1–R2, glass rim to R2+RIM, option arc RS1–RS2
 const R1 = 84, R2 = 200, RIM = 16, RS1 = R2 + RIM + 8, RS2 = RS1 + 78, SIZE = (RS2 + 24) * 2, C = SIZE / 2;
-const SUB_STEP = 0.4; // radians per option in the outer arc
+const SUB_STEP = 0.36; // radians per option in the outer arc
 const wheel = { el: document.getElementById('wheel'), open: false, def: null, hover: null, hot: null, sub: null, cx: 0, cy: 0 };
 Object.assign(wheel.el.style, { width: SIZE + 'px', height: SIZE + 'px' });
 
@@ -448,9 +448,9 @@ function springTo(state, target, { response = .35, damping = 1, onFrame, onRest 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const openState = { x: 0, v: 0, raf: 0, target: 0 };
 function paintOpen(p) {
-  const s = reducedMotion.matches ? 1 : .62 + .38 * p;
+  const s = reducedMotion.matches ? 1 : .8 + .2 * p;
   wheel.el.style.transform = `scale(${s})`;
-  wheel.el.style.opacity = clamp(p * 1.4, 0, 1);
+  wheel.el.style.opacity = clamp(p * 2.2, 0, 1);
   wheel.el.style.visibility = p < .01 && !wheel.open ? 'hidden' : 'visible';
 }
 
@@ -467,7 +467,7 @@ function openWheel(x, y, kind) {
   wheel.el.classList.add('open');
   if (!reopen) { openState.x = 0; openState.v = 0; }
   // a little bounce on arrival: the wheel is "thrown" open by the gesture
-  springTo(openState, 1, { response: .42, damping: .72, onFrame: paintOpen });
+  springTo(openState, 1, { response: .3, damping: .78, onFrame: paintOpen });
 }
 function closeWheel() {
   wheel.open = false; wheel.hover = null; wheel.hot = null; collapseSub();
@@ -497,9 +497,9 @@ function renderWheel() {
     <svg class="main" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}">
       <defs>
         <radialGradient id="segfill" cx="${C}" cy="${C}" r="${R2}" gradientUnits="userSpaceOnUse">
-          <stop offset="${R1 / R2}" stop-color="#fff7f1" stop-opacity=".97"/><stop offset="1" stop-color="#ffe0cb" stop-opacity=".94"/></radialGradient>
-        <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9858"/><stop offset=".55" stop-color="#f4622b"/><stop offset="1" stop-color="#d93d16"/></linearGradient>
-        <filter id="hotglow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#e2451c" flood-opacity=".45"/></filter>
+          <stop offset="${R1 / R2}" stop-color="#f7fbff" stop-opacity=".97"/><stop offset="1" stop-color="#dbe9ff" stop-opacity=".94"/></radialGradient>
+        <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#74b9ff"/><stop offset=".55" stop-color="#2f86ff"/><stop offset="1" stop-color="#0a5fe0"/></linearGradient>
+        <filter id="hotglow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0b62e6" flood-opacity=".45"/></filter>
       </defs>${segs}</svg>
     <svg class="subs" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}"></svg>`;
   const r = (R1 + R2) / 2 + 6;
@@ -512,16 +512,30 @@ function renderWheel() {
   wheel.el.append(wheel.subLabels, wheel.center);
   wheel.sub = null; wheel.hot = null; wheel.hover = null;
   setCenter();
-  if (wheel.glassUrl) setGlass(wheel.glassUrl);
+  applyGlass();
 }
-// Real frosted glass in the desktop app: a snapshot of the screen behind the wheel, blurred.
-function setGlass(url) {
-  wheel.glassUrl = url;
-  const g = wheel.el.querySelector('.glass');
-  if (!g) return;
-  // the snapshot covers the whole window; line it up with the glass box (512px, centred on the wheel)
-  Object.assign(g.style, { backgroundImage: `url(${url})`, backgroundSize: `${innerWidth}px ${innerHeight}px`, backgroundPosition: `${256 - wheel.cx}px ${256 - wheel.cy}px` });
-  g.classList.add('on');
+// Frosted glass (desktop app): a small screen snapshot taken when the drag started,
+// blurred once into an image and reused, so the per-frame cost is a plain background.
+const glassCache = { at: 0, url: null, bounds: null };
+function prepareGlass(g) {
+  const img = new Image();
+  img.onload = () => {
+    const c = canvasOf(img.width, img.height), x = c.getContext('2d');
+    x.filter = 'blur(6px) saturate(1.9) brightness(1.12)'; x.drawImage(img, 0, 0);
+    c.toBlob(b => {
+      if (glassCache.url) URL.revokeObjectURL(glassCache.url);
+      Object.assign(glassCache, { at: g.at, bounds: g.bounds, url: URL.createObjectURL(b) });
+      if (wheel.open) { wheel.wantGlass = true; applyGlass(); } // arrived while the wheel is up
+    }, 'image/jpeg', .85);
+  };
+  img.src = g.url;
+}
+function applyGlass() {
+  const el = wheel.el.querySelector('.glass');
+  if (!el || !wheel.wantGlass || !glassCache.url || !wheel.win) return;
+  const b = glassCache.bounds, ox = wheel.win.x + wheel.cx - 256, oy = wheel.win.y + wheel.cy - 256; // glass box (512px) in screen coords
+  Object.assign(el.style, { backgroundImage: `url(${glassCache.url})`, backgroundSize: `${b.width}px ${b.height}px`, backgroundPosition: `${b.x - ox}px ${b.y - oy}px` });
+  el.classList.add('on');
 }
 function setCenter(it) {
   const hint = wheel.def.items.some(i => i.items) ? `<small>⇧ ${t('daha fazlası')}</small>` : `<small>${t('bırak')}</small>`;
@@ -567,8 +581,9 @@ function hitWheel(x, y) {
     let rel = a - wheel.sub.a0; rel = ((rel % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     const k = Math.floor(rel / SUB_STEP), inSpan = rel < wheel.sub.n * SUB_STEP + .12 || rel > 2 * Math.PI - .12;
     if (d > R2 + 4 && d < RS2 + 40 && k >= 0 && k < wheel.sub.n) return { sub: wheel.sub.group.items[k] };
-    // heading out toward the open options across a neighbouring slice: stay on the group
-    if (inSpan && d > R2 - 56 && d <= R2 + 4) return { item: wheel.sub.group };
+    // crossing the outer edge of a neighbouring slice on the way out to the options: stay on the group.
+    // Only while moving outward, so going *into* a neighbour (e.g. MORE next to CONVERT) still selects it.
+    if (inSpan && d > R2 - 40 && d <= R2 + 4 && d >= (wheel.lastD ?? d) - .5) return { item: wheel.sub.group };
   }
   if (d < R1 - 6 || d > R2 + 50) return null;
   const items = wheel.def.items;
@@ -578,6 +593,7 @@ let dwell;
 function updateHover(x, y) {
   if (!wheel.open) return;
   const hit = hitWheel(x, y);
+  wheel.lastD = Math.hypot(x - wheel.cx, y - wheel.cy);
   const it = hit?.sub || hit?.item || null;
   if (hit?.item && wheel.sub && hit.item !== wheel.sub.group) collapseSub();
   if (it !== wheel.hot) {
@@ -1442,8 +1458,13 @@ if (DESKTOP_MODE === 'wheel') {
   let kind = null, at = { x: innerWidth / 2, y: innerHeight / 2 };
   const show = k => { kind = k; openWheel(at.x, at.y, k); };
   // main places the window around the cursor (kept on screen) and tells us where the cursor is in it
-  D.onShow(info => { at = { x: info?.cx ?? innerWidth / 2, y: info?.cy ?? innerHeight / 2 }; wheel.glassUrl = info?.glass || null; show('other'); });
-  D.onGlass(url => setGlass(url));
+  D.onShow(info => {
+    at = { x: info?.cx ?? innerWidth / 2, y: info?.cy ?? innerHeight / 2 };
+    wheel.win = { x: info?.winX ?? 0, y: info?.winY ?? 0 };
+    wheel.wantGlass = !!info?.glass && info.glass <= glassCache.at; // only a snapshot from this drag
+    show('other');
+  });
+  D.onGlass(g => prepareGlass(g));
   D.onHide(closeWheel);
   D.onCycle(() => { if (wheel.open) cycleMode(); });
   const over = e => {

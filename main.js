@@ -45,6 +45,9 @@ process.on('unhandledRejection', e => log('ERROR', e?.stack || e));
 
 // Started by Windows at login → stay silent; started by the user → say hello.
 const AT_LOGIN = process.argv.includes('--hidden');
+// Everything here is a few small windows with pre-blurred glass, so software rendering is just as
+// fast (wheel shows ~25 ms after Shift) and saves ~180 MB plus all GPU use for a tray add-on.
+app.disableHardwareAcceleration();
 if (!app.requestSingleInstanceLock()) { app.quit(); return; }
 log('starting', AT_LOGIN ? '(login)' : '(manual)');
 app.on('second-instance', () => showHelp());
@@ -71,41 +74,33 @@ function setLang(lang) {
   buildTray();
 }
 
-// ---------- frosted glass: a snapshot of the screen taken when a file drag starts,
-// cropped to the wheel window and blurred by the page, so the wheel shows what is behind it.
-let snap = null, snapping = null;
+// ---------- frosted glass: a small snapshot of the screen taken when a file drag starts.
+// It is going to be blurred anyway, so a quarter-resolution JPEG is plenty and costs almost nothing;
+// the wheel page blurs it once and reuses it, so pressing Shift never waits on it.
+let snap = null, snapping = false;
 function captureScreen() {
   if (snapping || (snap && Date.now() - snap.at < 1500)) return;
+  snapping = true;
   const d = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
-  const size = { width: Math.round(d.size.width * d.scaleFactor), height: Math.round(d.size.height * d.scaleFactor) };
-  snapping = desktopCapturer.getSources({ types: ['screen'], thumbnailSize: size })
+  desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: Math.round(d.size.width / 4), height: Math.round(d.size.height / 4) } })
     .then(srcs => {
-      const src = srcs.find(s => s.display_id === String(d.id)) || srcs[0];
-      snap = { id: d.id, bounds: d.bounds, scale: d.scaleFactor, image: src.thumbnail, at: Date.now() };
-      if (shown) sendGlass();
+      const src = srcs.find(x => x.display_id === String(d.id)) || srcs[0];
+      snap = { at: Date.now(), bounds: d.bounds, url: 'data:image/jpeg;base64,' + src.thumbnail.toJPEG(75).toString('base64') };
+      wheelWin.webContents.send('wheel:glass', snap);
     })
     .catch(e => log('capture failed', e.message))
-    .finally(() => { snapping = null; });
+    .finally(() => { snapping = false; });
 }
-let wheelBounds = null;
-function glassFor(b) {
-  if (!snap || Date.now() - snap.at > 20000) return null;
-  const { bounds: db, scale: k } = snap;
-  if (b.x < db.x || b.y < db.y || b.x + b.width > db.x + db.width || b.y + b.height > db.y + db.height) return null;
-  const crop = snap.image.crop({ x: Math.round((b.x - db.x) * k), y: Math.round((b.y - db.y) * k), width: Math.round(b.width * k), height: Math.round(b.height * k) });
-  return 'data:image/jpeg;base64,' + crop.resize({ width: b.width, height: b.height, quality: 'good' }).toJPEG(82).toString('base64');
-}
-function sendGlass() { const url = wheelBounds && glassFor(wheelBounds); if (url) wheelWin.webContents.send('wheel:glass', url); }
 
 function showWheel() {
   const p = screen.getCursorScreenPoint(), db = screen.getDisplayNearestPoint(p).bounds;
   // keep the whole wheel (and its option arc) on the cursor's screen
   const x = Math.round(Math.min(Math.max(p.x - WHEEL / 2, db.x), db.x + db.width - WHEEL));
   const y = Math.round(Math.min(Math.max(p.y - WHEEL / 2, db.y), db.y + db.height - WHEEL));
-  wheelBounds = { x, y, width: WHEEL, height: WHEEL };
-  wheelWin.setBounds(wheelBounds);
+  wheelWin.setBounds({ x, y, width: WHEEL, height: WHEEL });
   lastDrop = p;
-  wheelWin.webContents.send('wheel:show', { cx: p.x - x, cy: p.y - y, glass: glassFor(wheelBounds) });
+  const glass = snap && Date.now() - snap.at < 20000 ? snap.at : 0;
+  wheelWin.webContents.send('wheel:show', { cx: p.x - x, cy: p.y - y, winX: x, winY: y, glass });
   wheelWin.showInactive();
   wheelWin.moveTop(); // above any open tool window, so the drop always lands on the wheel
   shown = true;
@@ -144,7 +139,7 @@ function startWatching() {
     else if (s && !shift && shown) wheelWin.webContents.send('wheel:cycle');
     if (e && !esc) hideWheel();
     mouse = m; shift = s; esc = e;
-  }, 30);
+  }, 20);
   log('watching input');
 }
 
@@ -231,11 +226,11 @@ ipcMain.on('reveal', (_e, file) => shell.showItemInFolder(file));
 ipcMain.on('toast-hidden', () => toastWin?.hide());
 
 function trayIcon() {
-  // 16x16 orange dot, built in code so the app needs no image files
+  // 16x16 blue dot, built in code so the app needs no image files
   const s = 16, buf = Buffer.alloc(s * s * 4);
   for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
     const d = Math.hypot(x - 7.5, y - 7.5), a = Math.max(0, Math.min(1, 7.5 - d)) * 255, i = (y * s + x) * 4;
-    buf[i] = 0x20; buf[i + 1] = 0x53; buf[i + 2] = 0xee; buf[i + 3] = a; // BGRA
+    buf[i] = 0xff; buf[i + 1] = 0x7a; buf[i + 2] = 0x1f; buf[i + 3] = a; // BGRA
   }
   return nativeImage.createFromBitmap(buf, { width: s, height: s });
 }
@@ -273,9 +268,9 @@ app.whenReady().then(() => {
     captureScreen();
     setTimeout(() => {
       const { x, y, width, height } = screen.getPrimaryDisplay().bounds;
-      wheelBounds = { x: x + Math.round((width - WHEEL) / 2), y: y + Math.round((height - WHEEL) / 2), width: WHEEL, height: WHEEL };
-      wheelWin.setBounds(wheelBounds);
-      wheelWin.webContents.send('wheel:show', { cx: WHEEL / 2, cy: WHEEL / 2, glass: glassFor(wheelBounds) });
+      const wx = x + Math.round((width - WHEEL) / 2), wy = y + Math.round((height - WHEEL) / 2);
+      wheelWin.setBounds({ x: wx, y: wy, width: WHEEL, height: WHEEL });
+      wheelWin.webContents.send('wheel:show', { cx: WHEEL / 2, cy: WHEEL / 2, winX: wx, winY: wy, glass: snap?.at || 0 });
       wheelWin.showInactive(); shown = true;
       setTimeout(() => wheelWin.webContents.executeJavaScript(`(() => { openWheel(wheel.cx, wheel.cy, "image"); const st = 2 * Math.PI / 9, a = 6 * st;
         updateHover(wheel.cx + 140 * Math.sin(a), wheel.cy - 140 * Math.cos(a)); cycleMode();

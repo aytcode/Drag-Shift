@@ -130,13 +130,17 @@ function startWatching() {
     const wasDragging = dragging;
     if (m && !dragging && downAt) {
       const p = screen.getCursorScreenPoint();
-      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, shift=' + s); captureScreen(); }
+      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, shift=' + s); }
     }
     if (!m) dragging = false;
     // Open when Shift is pressed during a drag, or a drag starts with Shift already held;
     // another Shift press while open switches the wheel.
     if (m && dragging && s && !shown && (!shift || !wasDragging)) { log('open wheel'); showWheel(); }
     else if (s && !shift && shown) wheelWin.webContents.send('wheel:cycle');
+    // The screen snapshot for the glass blocks this process for a few hundred ms, so it never runs
+    // before the wheel is shown: taken right after the drag starts, unless the wheel is already up
+    // (it would photograph itself) — then the wheel simply uses its plain tint.
+    if (dragging && !wasDragging && !shown) setTimeout(captureScreen, 0);
     if (e && !esc) hideWheel();
     mouse = m; shift = s; esc = e;
   }, 20);

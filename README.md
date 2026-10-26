@@ -22,6 +22,8 @@ Windows için arka planda çalışan küçük bir eklenti: bir dosyayı sürükl
 | Metin (.txt, .md, .csv…) | PDF, DOCX, HTML ve dosya işlemleri |
 | **Dosya ›** (her dosya) | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya oluştur, Hash (SHA-256/SHA-1), Base64 |
 
+Çark, arkasındaki ekranı bulanıklaştıran gerçek bir buzlu cam gibi görünür ve yay animasyonuyla açılır; işlem sürerken ilerleme kartı çıkar, bitince **Göster** ile dosyaya gidilir.
+
 Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Arayüz Türkçe (tepsi menüsünden İngilizceye geçilebilir).
 
 ## Geliştirme

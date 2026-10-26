@@ -230,11 +230,11 @@ ipcMain.on('reveal', (_e, file) => shell.showItemInFolder(file));
 ipcMain.on('toast-hidden', () => toastWin?.hide());
 
 function trayIcon() {
-  // 16x16 blue dot, built in code so the app needs no image files
+  // 16x16 orange dot, built in code so the app needs no image files
   const s = 16, buf = Buffer.alloc(s * s * 4);
   for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
     const d = Math.hypot(x - 7.5, y - 7.5), a = Math.max(0, Math.min(1, 7.5 - d)) * 255, i = (y * s + x) * 4;
-    buf[i] = 0xff; buf[i + 1] = 0x7a; buf[i + 2] = 0x1f; buf[i + 3] = a; // BGRA
+    buf[i] = 0x20; buf[i + 1] = 0x53; buf[i + 2] = 0xee; buf[i + 3] = a; // BGRA
   }
   return nativeImage.createFromBitmap(buf, { width: s, height: s });
 }

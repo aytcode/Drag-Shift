@@ -3,8 +3,8 @@
 // One small backend per platform, all through koffi.
 const koffi = require('koffi');
 
-// Same chord on every platform: Shift = convert, Ctrl/Control = tools, Alt/Option = file actions.
-const chordOf = (shift, ctrl, alt) => (shift + ctrl + alt !== 1 ? null : shift ? 'convert' : ctrl ? 'tools' : 'actions');
+// Shift alone opens the wheel; Ctrl/Alt (Command/Option) keep their usual meaning in the file manager.
+const shiftOnly = (shift, ctrl, alt) => shift && !ctrl && !alt;
 
 function windows() {
   const user32 = koffi.load('user32.dll');
@@ -20,7 +20,7 @@ function windows() {
   return {
     name: 'win32',
     mouseDown: () => down(0x01),
-    chord: () => chordOf(down(0x10), down(0x11), down(0x12)),
+    shift: () => shiftOnly(down(0x10), down(0x11), down(0x12)),
     escape: () => down(0x1B),
     fromFileManager() {
       const p = {};
@@ -43,10 +43,9 @@ function mac() {
   return {
     name: 'darwin',
     mouseDown: () => ButtonState(HID, 0),
-    chord() {
+    shift() {
       const f = BigInt(FlagsState(HID));
-      if (f & COMMAND) return null; // Command-drag means "move" in Finder; leave it alone
-      return chordOf(!!(f & SHIFT), !!(f & CONTROL), !!(f & OPTION));
+      return shiftOnly(!!(f & SHIFT), !!(f & (CONTROL | COMMAND)), !!(f & OPTION));
     },
     escape: () => KeyState(HID, 53),
     fromFileManager: () => true, // no reliable window class; the wheel still only shows for file drags
@@ -70,13 +69,13 @@ function linux() {
   return {
     name: 'linux',
     mouseDown: () => (mask() & 0x100) !== 0, // Button1Mask
-    chord() { const m = mask(); return chordOf(!!(m & 1), !!(m & 4), !!(m & 8)); }, // Shift, Control, Mod1 (Alt)
+    shift() { const m = mask(); return shiftOnly(!!(m & 1), !!(m & 4), !!(m & 8)); }, // Shift, Control, Mod1 (Alt)
     escape() { XQueryKeymap(dpy, keys); return !!(keys[escCode >> 3] & (1 << (escCode & 7))); },
     fromFileManager: () => true,
   };
 }
 
-const none = reason => ({ name: 'none', reason, mouseDown: () => false, chord: () => null, escape: () => false, fromFileManager: () => false });
+const none = reason => ({ name: 'none', reason, mouseDown: () => false, shift: () => false, escape: () => false, fromFileManager: () => false });
 
 module.exports = function createInput() {
   try {

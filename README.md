@@ -2,7 +2,7 @@
 
 # Drag + Shift
 
-Dosya yöneticisinde bir dosyayı sürüklerken **Shift**, **Ctrl** ya da **Alt**'a bas — imlecin altında bir çark açılır, dosyayı bir işlemin üstüne bırak. Sonuç orijinal dosyanın yanına kaydedilir; orijinal hiç değişmez. **Windows, macOS ve Linux** için.
+Dosya yöneticisinde bir dosyayı sürüklerken **Shift**'e bas — imlecin altında bir çark açılır, dosyayı bir işlemin üstüne bırak. Sonuç orijinal dosyanın yanına kaydedilir; orijinal hiç değişmez. **Windows, macOS ve Linux** için.
 
 ## İndir
 
@@ -18,13 +18,17 @@ Uygulama tepside (menü çubuğunda) durur. Tepsiye tıklayınca **ana pencere**
 
 ## Kullanım
 
-| Tuş (Windows/Linux · macOS) | Çark | Görsel | PDF | Metin | ZIP |
-|---|---|---|---|---|---|
-| **Shift** · ⇧ | Dönüştür | JPG, PNG, WEBP, PDF (birden fazla görsel → tek PDF), ICO, BMP | DOCX, JPG, PNG, TXT | PDF, DOCX, HTML | Çıkar, İçerik |
-| **Ctrl** · ⌃ Control | Araçlar | Kırp, Düzenle, Arka plan, İşaretle, Gizle, Sıkıştır, Boyutlandır, Döndür, Çevir, Siyah-beyaz, Üstveri | Sayfalara ayır, Birleştir, Döndür, Üstveri temizle | — | Çıkar, İçerik, Optimize et |
-| **Alt** · ⌥ Option | Dosya | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya, Hash (SHA-256/SHA-1), Base64 | ← aynı | ← aynı | ← aynı |
+Tek tuş: **Shift** (macOS'ta da ⇧). Her dosya türünün tek bir çarkı var; **›** işaretli gruplar (Dönüştür, Daha fazla, Dosya) üzerinde biraz bekle, tekrar **Shift**'e bas ya da tıkla — seçenekleri dışarı doğru açılır.
 
-Çark açıkken diğer tuşa basınca o çarka geçilir; **Esc** kapatır. Çark yalnızca gerçekten dosya taşıyan bir sürüklemede görünür. Düzenleme araçları büyük bir pencerede açılır: solda önizleme, sağda ayarlar, altta **kopyayı kaydet**.
+| Dosya | Çark | Gruplar (›) |
+|---|---|---|
+| **Görsel** | Kırp, Düzenle, Arka plan, Sıkıştır | **Dönüştür ›** JPG, PNG, WEBP, PDF (birden fazla görsel → tek PDF), ICO, BMP · **Daha fazla ›** İşaretle, Gizle, Boyutlandır, Döndür, Çevir, Siyah-beyaz, Üstveri · **Dosya ›** |
+| **PDF** | DOCX, JPG, PNG, TXT, Sayfalara ayır, Birleştir (birden fazla PDF) | **Daha fazla ›** Döndür, Üstveri temizle · **Dosya ›** |
+| **Metin** (.txt, .md, .csv…) | PDF, DOCX, HTML | **Dosya ›** |
+| **ZIP** | Klasöre çıkar, İçerik listesi, Optimize et | **Dosya ›** |
+| **Her dosya** | | **Dosya ›** Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya, Hash (SHA-256/SHA-1), Base64 |
+
+**Esc** çarkı kapatır. Çark yalnızca gerçekten dosya taşıyan bir sürüklemede görünür. Düzenleme araçları büyük bir pencerede açılır: solda önizleme, sağda ayarlar, altta **kopyayı kaydet**.
 
 Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Arayüz Türkçe (tepsi menüsünden İngilizceye geçilebilir).
 

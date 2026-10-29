@@ -17,5 +17,5 @@ contextBridge.exposeInMainWorld('desktop', {
   onGlass: cb => ipcRenderer.on('wheel:glass', (_e, url) => cb(url)),
   onProgress: cb => ipcRenderer.on('toast:state', (_e, s) => cb(s)),
   onHide: cb => ipcRenderer.on('wheel:hide', () => cb()),
-  onMode: cb => ipcRenderer.on('wheel:mode', (_e, mode) => cb(mode)),
+  onCycle: cb => ipcRenderer.on('wheel:cycle', () => cb()),
 });

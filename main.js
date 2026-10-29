@@ -1,6 +1,5 @@
 // Drag + Shift: a background add-on for Windows, macOS and Linux. While dragging a file in the
-// file manager, hold Shift (convert), Ctrl (tools) or Alt (file actions) and a radial menu appears
-// under the cursor. Drop the file on an action; the result is saved next to the original file.
+// file manager, press Shift and a radial menu appears under the cursor. Drop the file on an action; the result is saved next to the original file.
 // It lives in the tray; the Home window offers the same tools for chosen or dropped files.
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, nativeTheme, desktopCapturer, systemPreferences } = require('electron');
 const path = require('path');
@@ -10,7 +9,7 @@ const input = require('./input')();
 
 const leftHeld = () => input.mouseDown();
 
-const WHEEL = 560; // the 480px wheel plus room for its shadow
+const WHEEL = 680; // the wheel (652px with its option arc) plus room for the shadow
 let wheelWin, tray;
 let shown = false;
 
@@ -99,9 +98,9 @@ function hideWheel() {
 }
 
 function startWatching() {
-  let mouse = false, chord = null, esc = false, downAt = null, dragging = false;
+  let mouse = false, shift = false, esc = false, downAt = null, dragging = false;
   setInterval(() => {
-    const m = leftHeld(), k = input.chord(), e = input.escape();
+    const m = leftHeld(), s = input.shift(), e = input.escape();
     if (m && !mouse) {
       downAt = input.fromFileManager() ? screen.getCursorScreenPoint() : null; // ignore drags in other apps
       dragging = false;
@@ -109,18 +108,18 @@ function startWatching() {
     const wasDragging = dragging;
     if (m && !dragging && downAt) {
       const p = screen.getCursorScreenPoint();
-      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, chord=' + k); }
+      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, shift=' + s); }
     }
     if (!m) dragging = false;
-    // Open as soon as a chord is held during a drag (before or after it started);
-    // a different chord while the wheel is up switches to that wheel.
-    if (m && dragging && k && !shown) { log('open wheel', k); showWheel(k); }
-    else if (shown && k && k !== chord) wheelWin.webContents.send('wheel:mode', k);
+    // Open as soon as Shift is held during a drag (before or after it started);
+    // Shift again while the wheel is up opens the group under the pointer.
+    if (m && dragging && s && !shown) { log('open wheel'); showWheel(); }
+    else if (shown && s && !shift) wheelWin.webContents.send('wheel:cycle');
     // The screen snapshot for the glass blocks this process for a few hundred ms, so it never runs
     // before the wheel is shown: taken right after the drag starts, unless the wheel is already up.
     if (dragging && !wasDragging && !shown) setTimeout(captureScreen, 0);
     if (e && !esc) hideWheel();
-    mouse = m; chord = k; esc = e;
+    mouse = m; shift = s; esc = e;
   }, 20);
   log('watching input', input.name, input.reason || '');
 }
@@ -276,7 +275,7 @@ function buildTray() {
 if (process.argv.includes('--smoke')) {
   app.whenReady().then(() => {
     const report = { platform: process.platform, input: input.name, inputReason: input.reason || null, checks: [] };
-    try { input.mouseDown(); input.chord(); input.escape(); report.checks.push({ name: 'input backend polls', ok: input.name !== 'none' }); }
+    try { input.mouseDown(); input.shift(); input.escape(); report.checks.push({ name: 'input backend polls', ok: input.name !== 'none' }); }
     catch (e) { report.checks.push({ name: 'input backend polls', ok: false, detail: e.message }); }
     const w = new BrowserWindow({ show: false, webPreferences: { preload: path.join(__dirname, 'preload.js') } });
     ipcMain.once('smoke-done', (_e, results) => {

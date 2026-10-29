@@ -69,10 +69,10 @@
   /* ---- wheel: warm frosted glass (SIZE 652, centre 326, rim radius 216) ---- */
   #wheel { position:fixed; z-index:50; pointer-events:none; visibility:hidden; opacity:0; will-change:transform,opacity;
     font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
-  #wheel .glass { position:absolute; left:-16px; top:-16px; width:512px; height:512px; clip-path:circle(216px at 50% 50%);
+  #wheel .glass { position:absolute; left:70px; top:70px; width:512px; height:512px; clip-path:circle(216px at 50% 50%);
     opacity:0; transition:opacity .25s; background-repeat:no-repeat; }
   #wheel .glass.on { opacity:1; }
-  #wheel .ring { position:absolute; left:24px; top:24px; width:432px; height:432px; border-radius:50%;
+  #wheel .ring { position:absolute; left:110px; top:110px; width:432px; height:432px; border-radius:50%;
     background:radial-gradient(circle at 50% 28%, rgba(255,255,255,.94), rgba(244,244,247,.92) 72%);
     backdrop-filter:blur(24px) saturate(1.8);
     border:1px solid rgba(255,255,255,.75);
@@ -466,36 +466,28 @@ document.getElementById('add').onclick = () => document.getElementById('picker')
 document.getElementById('picker').onchange = e => { [...e.target.files].forEach(file => addFile(file, file.name)); e.target.value = ''; };
 
 // ---------- radial wheel
-// Like Nashi/Tangerine: the key held while dragging picks the wheel —
-// Shift = convert, Ctrl = tools, Alt = file actions. Pressing another of them while the
-// wheel is up switches to that wheel. Each wheel is one flat ring of choices.
+// One wheel per file kind, opened by Shift. Extra choices live in groups (›): rest on a group,
+// press Shift again or click it, and its options bloom into an outer arc.
 const A = (id, label, icon) => ({ id, label, icon });
+const G = (id, label, icon, items) => ({ id, label, icon, items });
 const FILE_ITEMS = [A('ext', 'EXTENSION', 'rename'), A('zip', 'ZIP', 'zip'), A('copy', 'COPY', 'copy'), A('hash', 'HASH', 'hash'), A('base64', 'BASE64', 'code')];
-const WHEEL_SETS = {
-  convert: {
-    image: [A('to-jpg', 'JPG'), A('to-png', 'PNG'), A('to-webp', 'WEBP'), A('to-pdf', 'PDF'), A('to-ico', 'ICO'), A('to-bmp', 'BMP')],
-    pdf: [A('docx', 'DOCX'), A('jpg', 'JPG'), A('png', 'PNG'), A('txt', 'TXT')],
-    text: [A('pdf', 'PDF'), A('docx', 'DOCX'), A('html', 'HTML')],
-    zip: [A('extract', 'EXTRACT', 'folder'), A('list', 'CONTENTS', 'list')],
-  },
-  tools: {
-    image: [A('crop', 'CROP', 'crop'), A('edit', 'EDIT', 'sliders'), A('addbg', 'ADD BG', 'image'), A('annotate', 'ANNOTATE', 'pen'),
-      A('redact', 'REDACT', 'eyeoff'), A('compress', 'COMPRESS', 'compress'), A('resize', 'RESIZE', 'resize'), A('rotate', 'ROTATE', 'rotate'),
-      A('flip', 'FLIP', 'flip'), A('gray', 'B&W', 'gray'), A('metadata', 'METADATA', 'tag')],
-    pdf: [A('split', 'SPLIT', 'scissors'), A('merge', 'MERGE', 'merge'), A('rotpdf', 'ROTATE', 'rotate'), A('clean', 'CLEAN', 'eraser')],
-    zip: [A('extract', 'EXTRACT', 'folder'), A('list', 'CONTENTS', 'list'), A('repack', 'OPTIMIZE', 'compress')],
-  },
+const FILE_GROUP = G('file', 'FILE', 'file', FILE_ITEMS);
+const WHEELS = {
+  image: { title: 'IMAGE', items: [A('crop', 'CROP', 'crop'), A('edit', 'EDIT', 'sliders'), A('addbg', 'ADD BG', 'image'), A('compress', 'COMPRESS', 'compress'),
+    G('convert', 'CONVERT', 'convert', [A('to-jpg', 'JPG'), A('to-png', 'PNG'), A('to-webp', 'WEBP'), A('to-pdf', 'PDF'), A('to-ico', 'ICO'), A('to-bmp', 'BMP')]),
+    G('more', 'MORE', 'dots', [A('annotate', 'ANNOTATE', 'pen'), A('redact', 'REDACT', 'eyeoff'), A('resize', 'RESIZE', 'resize'), A('rotate', 'ROTATE', 'rotate'),
+      A('flip', 'FLIP', 'flip'), A('gray', 'B&W', 'gray'), A('metadata', 'METADATA', 'tag')]),
+    FILE_GROUP] },
+  pdf: { title: 'PDF', items: [A('docx', 'DOCX'), A('jpg', 'JPG'), A('png', 'PNG'), A('txt', 'TXT'), A('split', 'SPLIT', 'scissors'), A('merge', 'MERGE', 'merge'),
+    G('pdfmore', 'MORE', 'dots', [A('rotpdf', 'ROTATE', 'rotate'), A('clean', 'CLEAN', 'eraser')]), FILE_GROUP] },
+  text: { title: 'TEXT', items: [A('pdf', 'PDF'), A('docx', 'DOCX'), A('html', 'HTML'), FILE_GROUP] },
+  zip: { title: 'ZIP', items: [A('extract', 'EXTRACT', 'folder'), A('list', 'CONTENTS', 'list'), A('repack', 'OPTIMIZE', 'compress'), FILE_GROUP] },
+  other: { title: 'FILE', items: FILE_ITEMS },
 };
-const MODE_TITLES = { convert: 'CONVERT', tools: 'TOOLS', actions: 'FILE' };
-const MODE_KEYS = { convert: '⇧', tools: 'Ctrl', actions: 'Alt' };
-// A kind with nothing to convert or edit (e.g. an .exe) falls back to the file actions.
-function wheelFor(mode, kind) {
-  const items = mode === 'actions' ? FILE_ITEMS : WHEEL_SETS[mode]?.[kind];
-  return items?.length ? { mode, items } : { mode: 'actions', items: FILE_ITEMS };
-}
-// geometry: ring R1–R2 with a glass rim; the window is just big enough for the rim and its shadow
-const R1 = 84, R2 = 200, RIM = 16, SIZE = (R2 + RIM + 24) * 2, C = SIZE / 2;
-const wheel = { el: document.getElementById('wheel'), open: false, revealed: false, mode: 'convert', kind: 'other', items: [], hover: null, hot: null, cx: 0, cy: 0 };
+// geometry: main ring R1–R2, glass rim to R2+RIM, option arc RS1–RS2
+const R1 = 84, R2 = 200, RIM = 16, RS1 = R2 + RIM + 8, RS2 = RS1 + 78, SIZE = (RS2 + 24) * 2, C = SIZE / 2;
+const SUB_STEP = 0.36; // radians per option in the outer arc
+const wheel = { el: document.getElementById('wheel'), open: false, revealed: false, def: null, items: [], hover: null, hot: null, sub: null, cx: 0, cy: 0 };
 Object.assign(wheel.el.style, { width: SIZE + 'px', height: SIZE + 'px' });
 
 // Tiny spring (Apple-style damping ratio + response). Interruptible: it always starts
@@ -525,14 +517,14 @@ function paintOpen(p) {
 }
 
 // reveal = false keeps the wheel invisible until a drag that really carries files reaches it
-// (desktop app); plain drags with a modifier — text selection, scrollbars — never show it.
-function openWheel(x, y, kind, mode = wheel.mode, { reveal = true } = {}) {
+// (desktop app); plain drags with Shift — text selection, scrollbars — never show it.
+function openWheel(x, y, kind, _mode, { reveal = true } = {}) {
   wheel.cx = clamp(x, C, Math.max(C, innerWidth - C));
   wheel.cy = clamp(y, C, Math.max(C, innerHeight - C));
   if (DESKTOP_MODE === 'wheel') { wheel.cx = x; wheel.cy = y; } // the window is already placed around the cursor
   wheel.el.style.left = wheel.cx - C + 'px';
   wheel.el.style.top = wheel.cy - C + 'px';
-  wheel.kind = kind; wheel.mode = mode;
+  wheel.def = WHEELS[kind] || WHEELS.other;
   renderWheel();
   wheel.open = true;
   if (reveal) revealWheel();
@@ -546,17 +538,13 @@ function revealWheel() {
   springTo(openState, 1, { response: .26, damping: .78, onFrame: paintOpen });
 }
 function closeWheel() {
-  wheel.open = false; wheel.revealed = false; wheel.hover = null; wheel.hot = null;
+  wheel.open = false; wheel.revealed = false; wheel.hover = null; wheel.hot = null; collapseSub();
   wheel.el.classList.remove('open');
   springTo(openState, 0, { response: .2, damping: 1, onFrame: paintOpen });
 }
-function setMode(mode) {
-  if (!wheel.open || mode === wheel.mode) return;
-  wheel.mode = mode; renderWheel();
-  wheel.el.querySelectorAll('.sg, .wl').forEach(el => el.animate?.([{ opacity: 0, transform: el.style.transform || '' }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }));
-}
-// web page: Shift again steps through the wheels
-function cycleMode() { const order = ['convert', 'tools', 'actions']; setMode(order[(order.indexOf(wheel.mode) + 1) % 3]); }
+function setMode() {} // one wheel per kind now
+// Shift while a group is under the pointer opens its options.
+function cycleMode() { if (wheel.hot?.items) expandSub(wheel.hot); }
 
 const polar = (r, a) => [C + r * Math.sin(a), C - r * Math.cos(a)];
 const pt = (r, a) => polar(r, a).map(v => v.toFixed(2)).join(' ');
@@ -565,15 +553,14 @@ function slicePath(r0, r1, a0, a1, gap) {
   const ri = r0 + 6, ro = r1 - 6, g = gap + 6, large = a1 - a0 > Math.PI ? 1 : 0;
   return `M${pt(ro, a0 + g / ro)}A${ro} ${ro} 0 ${large} 1 ${pt(ro, a1 - g / ro)}L${pt(ri, a1 - g / ri)}A${ri} ${ri} 0 ${large} 0 ${pt(ri, a0 + g / ri)}Z`;
 }
-const labelHtml = it => (it.icon ? svgIcon(it.icon) : '') + `<span>${t(it.label)}</span>`;
+const labelHtml = it => (it.icon ? svgIcon(it.icon) : '') + `<span>${t(it.label)}${it.items ? ' ›' : ''}</span>`;
 function renderWheel() {
-  const set = wheelFor(wheel.mode, wheel.kind);
-  wheel.mode = set.mode; wheel.items = set.items;
-  const items = set.items, n = items.length, step = 2 * Math.PI / n;
+  const items = wheel.def.items, n = items.length, step = 2 * Math.PI / n;
+  wheel.items = items.flatMap(i => i.items || [i]); // every action reachable from this wheel (for labels)
   wheel.step = step;
   const segs = items.map((it, i) => {
     const a = i * step, [dx, dy] = [Math.sin(a), -Math.cos(a)];
-    return `<g class="sg" data-id="${it.id}" style="--dx:${dx * 7}px;--dy:${dy * 7}px"><path class="seg" d="${slicePath(R1, R2, a - step / 2, a + step / 2, n > 8 ? 3 : 4)}"/></g>`;
+    return `<g class="sg" data-id="${it.id}" style="--dx:${dx * 7}px;--dy:${dy * 7}px;transition-delay:${i * 18}ms"><path class="seg" d="${slicePath(R1, R2, a - step / 2, a + step / 2, 4)}"/></g>`;
   }).join('');
   wheel.el.innerHTML = `
     <div class="glass"></div><div class="ring"></div>
@@ -583,15 +570,17 @@ function renderWheel() {
           <stop offset="${R1 / R2}" stop-color="#ffffff" stop-opacity=".97"/><stop offset="1" stop-color="#f2f2f5" stop-opacity=".94"/></radialGradient>
         <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9858"/><stop offset=".55" stop-color="#f4622b"/><stop offset="1" stop-color="#d93d16"/></linearGradient>
         <filter id="hotglow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#e2451c" flood-opacity=".45"/></filter>
-      </defs>${segs}</svg>`;
+      </defs>${segs}</svg>
+    <svg class="subs" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}"></svg>`;
   const r = (R1 + R2) / 2 + 6;
   items.forEach((it, i) => {
     const [x, y] = polar(r, i * step);
-    wheel.el.append(h('div', { class: 'wl' + (n > 8 ? ' dense' : ''), 'data-id': it.id, style: { left: x + 'px', top: y + 'px', '--dx': Math.sin(i * step) * 7 + 'px', '--dy': -Math.cos(i * step) * 7 + 'px' }, html: labelHtml(it) }));
+    wheel.el.append(h('div', { class: 'wl', 'data-id': it.id, style: { left: x + 'px', top: y + 'px', '--dx': Math.sin(i * step) * 7 + 'px', '--dy': -Math.cos(i * step) * 7 + 'px', transitionDelay: i * 18 + 'ms' }, html: labelHtml(it) }));
   });
+  wheel.subLabels = h('div', { class: 'sublabels' });
   wheel.center = h('div', { class: 'wc' });
-  wheel.el.append(wheel.center);
-  wheel.hot = null; wheel.hover = null;
+  wheel.el.append(wheel.subLabels, wheel.center);
+  wheel.sub = null; wheel.hot = null; wheel.hover = null;
   setCenter();
   applyGlass();
 }
@@ -619,28 +608,76 @@ function applyGlass() {
   el.classList.add('on');
 }
 function setCenter(it) {
-  // idle: which wheel this is, and the keys for the other two
-  const others = Object.keys(MODE_TITLES).filter(m => m !== wheel.mode).map(m => `${MODE_KEYS[m]} ${t(MODE_TITLES[m]).toLocaleLowerCase(LANG === 'tr' ? 'tr' : 'en')}`).join(' · ');
-  wheel.center.innerHTML = it ? `<b>${t(it.label)}</b>` : `<b>${t(MODE_TITLES[wheel.mode])}</b><small>${others}</small>`;
+  const hint = wheel.def.items.some(i => i.items) ? `<small>⇧ ${t('daha fazlası')}</small>` : `<small>${t('bırak')}</small>`;
+  wheel.center.innerHTML = it ? `<b>${t(it.label)}</b>${it.items ? `<small>⇧ ${t('aç')}</small>` : ''}` : `<b>${t(wheel.def.title)}</b>${hint}`;
   wheel.center.classList.remove('pulse'); void wheel.center.offsetWidth; wheel.center.classList.add('pulse');
+}
+function expandSub(group) {
+  if (wheel.sub?.group === group) return;
+  collapseSub(true);
+  const i = wheel.def.items.indexOf(group), ga = i * wheel.step, n = group.items.length;
+  const a0 = ga - n * SUB_STEP / 2;
+  wheel.sub = { group, a0, n };
+  const svg = wheel.el.querySelector('svg.subs');
+  svg.innerHTML = group.items.map((it, k) => `<g class="sg sub" data-id="${it.id}" style="transition-delay:${k * 28}ms"><path class="seg" d="${slicePath(RS1, RS2, a0 + k * SUB_STEP, a0 + (k + 1) * SUB_STEP, 3)}"/></g>`).join('');
+  wheel.subLabels.innerHTML = '';
+  group.items.forEach((it, k) => {
+    const [x, y] = polar((RS1 + RS2) / 2, a0 + (k + .5) * SUB_STEP);
+    wheel.subLabels.append(h('div', { class: 'wl sub', 'data-id': it.id, style: { left: x + 'px', top: y + 'px', transitionDelay: k * 28 + 'ms' }, html: labelHtml(it) }));
+  });
+  // bloom outward from the group slice (origin = wheel centre, so options grow toward the pointer)
+  requestAnimationFrame(() => wheel.el.classList.add('expanded'));
+  wheel.el.querySelector(`.sg[data-id="${group.id}"]`)?.classList.add('open');
+}
+function collapseSub(instant) {
+  if (!wheel.sub) return;
+  wheel.el.querySelector('.sg.open')?.classList.remove('open');
+  wheel.el.classList.remove('expanded');
+  wheel.sub = null;
+  const svg = wheel.el.querySelector('svg.subs'), labels = wheel.subLabels;
+  const clear = () => { if (!wheel.sub) { svg.innerHTML = ''; labels.innerHTML = ''; } };
+  if (instant) clear(); else setTimeout(clear, 180);
 }
 function setHot(id) {
   wheel.el.querySelectorAll('[data-id]').forEach(el => el.classList.toggle('hot', el.dataset.id === id));
 }
-function setHover(id) { wheel.hover = id; }
+function setHover(id) {
+  wheel.hover = id;
+}
 function hitWheel(x, y) {
   const dx = x - wheel.cx, dy = y - wheel.cy, d = Math.hypot(dx, dy);
-  if (d < R1 - 6 || d > R2 + 60) return null;
   let a = Math.atan2(dx, -dy); if (a < 0) a += 2 * Math.PI;
-  return wheel.items[Math.floor(((a + wheel.step / 2) % (2 * Math.PI)) / wheel.step)];
+  if (wheel.sub) {
+    let rel = a - wheel.sub.a0; rel = ((rel % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const k = Math.floor(rel / SUB_STEP), inSpan = rel < wheel.sub.n * SUB_STEP + .12 || rel > 2 * Math.PI - .12;
+    if (d > R2 + 4 && d < RS2 + 40 && k >= 0 && k < wheel.sub.n) return { sub: wheel.sub.group.items[k] };
+    // crossing the outer edge of a neighbouring slice on the way out to the options: stay on the group.
+    // Only while moving outward, so going *into* a neighbour (e.g. MORE next to CONVERT) still selects it.
+    if (inSpan && d > R2 - 40 && d <= R2 + 4 && d >= (wheel.lastD ?? d) - .5) return { item: wheel.sub.group };
+  }
+  if (d < R1 - 6 || d > R2 + 50) return null;
+  const items = wheel.def.items;
+  return { item: items[Math.floor(((a + wheel.step / 2) % (2 * Math.PI)) / wheel.step)] };
 }
+let dwell;
 function updateHover(x, y) {
   if (!wheel.open) return;
-  const it = hitWheel(x, y);
-  if (it !== wheel.hot) { wheel.hot = it; setHot(it?.id ?? null); setCenter(it || undefined); }
-  setHover(it?.id ?? null);
+  const hit = hitWheel(x, y);
+  wheel.lastD = Math.hypot(x - wheel.cx, y - wheel.cy);
+  const it = hit?.sub || hit?.item || null;
+  if (hit?.item && wheel.sub && hit.item !== wheel.sub.group) collapseSub();
+  if (it !== wheel.hot) {
+    wheel.hot = it;
+    clearTimeout(dwell);
+    if (it?.items) dwell = setTimeout(() => wheel.hot === it && expandSub(it), 420); // resting on a group opens it
+    setHot(it?.id ?? null);
+    if (wheel.sub && !it?.items && hit?.sub) wheel.el.querySelector(`.sg[data-id="${wheel.sub.group.id}"]`)?.classList.add('open');
+    setCenter(it || undefined);
+  }
+  setHover(it && !it.items ? it.id : null);
   drag?.ghost?.classList.toggle('ok', !!wheel.hover);
 }
+
 
 // ---------- dragging icons inside the page
 let drag = null;
@@ -1534,7 +1571,7 @@ if (DESKTOP_MODE === 'wheel') {
   });
   D.onGlass(g => prepareGlass(g));
   D.onHide(() => { document.body.classList.remove('armed'); closeWheel(); });
-  D.onMode(m => { mode = m; setMode(m); });
+  D.onCycle(() => { if (wheel.open) cycleMode(); });
   const over = e => {
     e.preventDefault();
     // Only a drag that carries files shows the wheel (Nashi does the same): anything else stays invisible.
@@ -1584,7 +1621,7 @@ if (DESKTOP_MODE === 'wheel') {
 if (DESKTOP_MODE === 'home') {
   const D = window.desktop, tr = LANG === 'tr', OS = new URLSearchParams(location.search).get('os');
   const T = (a, b) => tr ? a : b;
-  const KEYS = OS === 'darwin' ? ['⇧', '⌃', '⌥'] : ['⇧', 'Ctrl', 'Alt'];
+  const KEYS = ['⇧ Shift'];
   const FM = OS === 'darwin' ? 'Finder' : OS === 'linux' ? 'your file manager' : 'Explorer';
   const FM_TR = OS === 'darwin' ? "Finder'da" : OS === 'linux' ? 'dosya yöneticisinde' : "Explorer'da";
   let picked = []; // { file, path, name, kind }
@@ -1594,7 +1631,7 @@ if (DESKTOP_MODE === 'home') {
   const chips = h('div', { class: 'chips' });
   const acts = h('div', { class: 'acts' });
   const list = h('div', { class: 'recent' });
-  const MODES = [['convert', 'convert', T('Dönüştür', 'Convert'), KEYS[0]], ['tools', 'sliders', T('Araçlar', 'Tools'), KEYS[1]], ['actions', 'file', T('Dosya', 'File'), KEYS[2]]];
+  const MODES = [['all', 'sliders', T('İşlemler', 'Actions'), '⇧']];
   const modeBtns = MODES.map(([mode, icon, label, key]) => h('button', { class: 'act', 'data-mode': mode, html: `${svgIcon(icon)}<span>${label}</span><kbd>${key}</kbd>`, onclick: e => openFor(mode, e.currentTarget) }));
   acts.append(...modeBtns);
   const card = h('section', { class: 'hcard' },
@@ -1650,6 +1687,7 @@ if (DESKTOP_MODE === 'home') {
   document.addEventListener('pointermove', e => updateHover(e.clientX, e.clientY));
   document.addEventListener('pointerdown', e => {
     if (!wheel.open || e.target.closest('.act')) return;
+    if (wheel.hot?.items) return expandSub(wheel.hot); // a group: show its options
     const act = wheel.hover, label = t(wheel.items.find(i => i.id === act)?.label || '');
     closeAll();
     if (act) run(act, label);
@@ -1712,6 +1750,12 @@ if (DESKTOP_MODE === 'smoke') (async () => {
   await check('any:zip (2 files)', async () => size(await ACTIONS.image.zip.run([png, txt])));
   for (const mode of ['convert', 'tools', 'actions']) for (const kind of ['image', 'pdf', 'text', 'zip', 'other'])
     await check(`wheel ${mode}/${kind}`, async () => { openWheel(400, 400, kind, mode); const n = wheel.el.querySelectorAll('.sg').length; closeWheel(); if (!n) throw new Error('no slices'); return `${n} slices`; });
+  await check('wheel groups open', async () => {
+    openWheel(400, 400, 'image');
+    const g = wheel.def.items.filter(i => i.items), out = [];
+    for (const grp of g) { expandSub(grp); const n = wheel.el.querySelectorAll('svg.subs .sg').length; if (n !== grp.items.length) throw new Error(grp.id + ' ' + n); out.push(grp.id + ':' + n); }
+    closeWheel(); return out.join(' ');
+  });
   window.desktop.smokeDone(results);
 })();
 

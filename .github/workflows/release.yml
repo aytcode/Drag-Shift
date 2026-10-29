@@ -1,6 +1,7 @@
 name: Release
 
-# Push a tag like v1.0.1 → builds the Windows installer and attaches it to the release.
+# Push a tag like v1.4.0 → builds Windows (installer), macOS (zip, Apple Silicon + Intel)
+# and Linux (AppImage + deb), runs the self-test on each, and attaches them to the release.
 on:
   push:
     tags: ['v*']
@@ -10,20 +11,48 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: --win nsis
+          - os: macos-latest
+            args: --mac zip
+          - os: ubuntu-latest
+            args: --linux AppImage deb
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci
-      - run: npx electron-builder --win nsis --publish never
-      - name: Upload installer to release
+      - name: Self-test
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npx electron . --smoke --no-sandbox; else npx electron . --smoke; fi
+      - run: npx electron-builder ${{ matrix.args }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Upload to release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          exe=$(ls dist/*.exe | grep -v __uninstaller | head -1)
-          cp "$exe" "dist/DragShift-Setup-${GITHUB_REF_NAME#v}.exe"
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Drag + Shift ${GITHUB_REF_NAME#v}" --notes "Kurulum dosyasını indirip çalıştır."
-          gh release upload "$GITHUB_REF_NAME" "dist/DragShift-Setup-${GITHUB_REF_NAME#v}.exe" --clobber
+          v="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          for f in dist/*.exe dist/*.zip dist/*.AppImage dist/*.deb; do
+            [ -e "$f" ] || continue
+            case "$f" in *__uninstaller*) continue;; esac
+            case "$f" in
+              *.exe) cp "$f" "out/DragShift-Setup-$v.exe";;
+              *arm64*.zip) cp "$f" "out/DragShift-$v-mac-arm64.zip";;
+              *.zip) cp "$f" "out/DragShift-$v-mac-x64.zip";;
+              *.AppImage) cp "$f" "out/DragShift-$v-linux-x86_64.AppImage";;
+              *.deb) cp "$f" "out/DragShift-$v-linux-amd64.deb";;
+            esac
+          done
+          ls -la out
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "Drag + Shift $v" --notes "Windows: Setup .exe · macOS: .zip (Apple Silicon / Intel) · Linux: AppImage / .deb"
+          gh release upload "$GITHUB_REF_NAME" out/* --clobber

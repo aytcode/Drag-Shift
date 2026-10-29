@@ -25,8 +25,10 @@
     "files": [
       "package.json",
       "main.js",
+      "input.js",
       "preload.js",
-      "index.html"
+      "index.html",
+      "build/icon.png"
     ],
     "asarUnpack": [
       "node_modules/koffi/**"
@@ -41,9 +43,35 @@
       "runAfterFinish": true,
       "shortcutName": "Drag + Shift",
       "createDesktopShortcut": false
+    },
+    "icon": "build/icon.png",
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "maintainer": "aliyigit",
+      "synopsis": "Drag a file, press Shift, drop it on an action."
     }
   },
   "allowScripts": {
     "electron@33.4.11": true
-  }
+  },
+  "homepage": "https://github.com/aytcode/Drag-Shift"
 }

@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('desktop', {
   close: () => ipcRenderer.send('close'),
   notify: (title, path) => ipcRenderer.send('notify', title, path),
   progress: state => ipcRenderer.send('progress', state),
+  smokeDone: results => ipcRenderer.send('smoke-done', results),
   reveal: path => ipcRenderer.send('reveal', path),
   toastHidden: () => ipcRenderer.send('toast-hidden'),
   onShow: cb => ipcRenderer.on('wheel:show', (_e, info) => cb(info)),

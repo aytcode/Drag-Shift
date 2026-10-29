@@ -1,0 +1,38 @@
+name: Test
+
+# Runs the app's own self-test (real conversions, every wheel, the platform's input backend)
+# on Windows, macOS and Linux.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Self-test (Linux, virtual X display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npx electron . --smoke --no-sandbox
+        env:
+          DS_SMOKE_OUT: smoke-${{ matrix.os }}.json
+      - name: Self-test
+        if: runner.os != 'Linux'
+        run: npx electron . --smoke
+        env:
+          DS_SMOKE_OUT: smoke-${{ matrix.os }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-${{ matrix.os }}
+          path: smoke-${{ matrix.os }}.json

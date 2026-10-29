@@ -10,7 +10,7 @@
 <script src="node_modules/jszip/dist/jszip.min.js"></script>
 <script src="node_modules/pdf-lib/dist/pdf-lib.min.js"></script>
 <style>
-  :root { --accent:#ee5320; --ink:#4a2412; --muted:#8a5a40; }
+  :root { --accent:#ee5320; --ink:#1d1d1f; --muted:#6e6e73; }
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; overflow:hidden; }
   body {
@@ -73,23 +73,23 @@
     opacity:0; transition:opacity .25s; background-repeat:no-repeat; }
   #wheel .glass.on { opacity:1; }
   #wheel .ring { position:absolute; left:24px; top:24px; width:432px; height:432px; border-radius:50%;
-    background:radial-gradient(circle at 50% 28%, rgba(255,250,246,.86), rgba(255,229,212,.8) 72%);
+    background:radial-gradient(circle at 50% 28%, rgba(255,255,255,.94), rgba(244,244,247,.92) 72%);
     backdrop-filter:blur(24px) saturate(1.8);
     border:1px solid rgba(255,255,255,.75);
-    box-shadow:0 26px 60px rgba(120,40,10,.26), 0 3px 8px rgba(120,40,10,.12), inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -14px 34px rgba(255,160,110,.16); }
-  #wheel .glass.on + .ring { background:radial-gradient(circle at 50% 28%, rgba(255,244,236,.84), rgba(255,212,184,.8) 75%); }
+    box-shadow:0 26px 60px rgba(0,0,0,.26), 0 3px 8px rgba(0,0,0,.12), inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -14px 34px rgba(0,0,0,.03); }
+  #wheel .glass.on + .ring { background:radial-gradient(circle at 50% 28%, rgba(255,255,255,.88), rgba(242,242,245,.84) 75%); }
   #wheel > svg { position:absolute; inset:0; overflow:visible; }
-  #wheel svg.subs { filter:drop-shadow(0 12px 22px rgba(120,40,10,.22)); }
+  #wheel svg.subs { filter:drop-shadow(0 12px 22px rgba(0,0,0,.22)); }
   .seg { fill:url(#segfill); stroke:url(#segfill); stroke-width:12; stroke-linejoin:round; transition:fill .18s, stroke .18s; }
   .sg { transition:transform .42s cubic-bezier(.34,1.5,.64,1), opacity .22s; }
   .sg.hot { transform:translate(var(--dx), var(--dy)); }
   .sg.hot .seg, .sg.sub.hot .seg { fill:url(#hot); stroke:url(#hot); filter:url(#hotglow); }
-  .sg.open .seg { fill:#ffd9c2; stroke:#ffd9c2; }
+  .sg.open .seg { fill:#f0f0f3; stroke:#f0f0f3; }
   .sg.sub { opacity:0; transform:scale(.84); transform-origin:326px 326px; transform-box:view-box; }
-  .sg.sub .seg { fill:rgba(255,243,235,.96); stroke:rgba(255,243,235,.96); }
+  .sg.sub .seg { fill:rgba(255,255,255,.97); stroke:rgba(255,255,255,.97); }
   #wheel.expanded .sg.sub { opacity:1; transform:none; }
   .wl { position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:6px; white-space:nowrap;
-    font-weight:650; font-size:11.5px; letter-spacing:.07em; color:#6a3820; text-shadow:0 1px 0 rgba(255,255,255,.55);
+    font-weight:650; font-size:11.5px; letter-spacing:.07em; color:#2c2c31; text-shadow:none;
     transition:transform .42s cubic-bezier(.34,1.5,.64,1), color .15s, opacity .22s; }
   .wl svg.i { width:20px; height:20px; stroke-width:1.7; }
   .wl.dense { font-size:10.5px; gap:4px; } .wl.dense svg.i { width:18px; height:18px; }
@@ -98,19 +98,19 @@
   #wheel.expanded .wl.sub { opacity:1; transform:translate(-50%,-50%); }
   #wheel.expanded .wl.sub.hot { transform:translate(-50%,-50%) scale(1.08); }
   .wc { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); min-width:118px; max-width:150px; padding:11px 18px; border-radius:999px;
-    text-align:center; background:linear-gradient(180deg,#fffaf6,#ffe7d8); color:#5a2e18; line-height:1.25;
-    box-shadow:inset 0 1px 0 #fff, inset 0 -1px 0 rgba(200,110,60,.15), 0 8px 20px rgba(150,60,20,.22); }
+    text-align:center; background:linear-gradient(180deg,#ffffff,#f3f3f6); color:#2c2c31; line-height:1.25;
+    box-shadow:inset 0 1px 0 #fff, inset 0 -1px 0 rgba(0,0,0,.15), 0 8px 20px rgba(0,0,0,.22); }
   .wc b { font-size:13px; letter-spacing:.08em; }
   .wc small { display:block; font-size:9.5px; font-weight:600; opacity:.6; letter-spacing:.04em; margin-top:1px; }
   .wc.pulse { animation:wcpulse .32s cubic-bezier(.34,1.6,.64,1); }
   @keyframes wcpulse { from { transform:translate(-50%,-50%) scale(.92); } }
   @media (prefers-reduced-motion: reduce) { .sg, .wl, .wc { transition:none !important; animation:none !important; } }
-  @media (prefers-reduced-transparency: reduce) { #wheel .glass { display:none; } #wheel .ring { background:#ffe9dc; backdrop-filter:none; } }
+  @media (prefers-reduced-transparency: reduce) { #wheel .glass { display:none; } #wheel .ring { background:#ffffff; backdrop-filter:none; } }
 
-  .backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:rgba(50,15,0,.2); backdrop-filter:blur(3px); }
+  .backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:rgba(0,0,0,.2); backdrop-filter:blur(3px); }
   .modal { width:min(580px,100%); max-height:calc(100vh - 32px); display:flex; flex-direction:column; border-radius:22px; overflow:hidden;
-    background:linear-gradient(180deg,rgba(255,210,165,.95),rgba(255,236,222,.97)); border:1px solid rgba(255,255,255,.7);
-    box-shadow:0 40px 90px rgba(80,20,0,.35); animation:pop .35s cubic-bezier(.2,1.2,.4,1); user-select:none; }
+    background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,248,250,.98)); border:1px solid rgba(255,255,255,.7);
+    box-shadow:0 40px 90px rgba(0,0,0,.35); animation:pop .35s cubic-bezier(.2,1.2,.4,1); user-select:none; }
   .mhead { position:relative; height:46px; display:grid; place-items:center; flex:none; }
   .mtitle { font-weight:700; font-size:14px; }
   .x { position:absolute; left:14px; top:12px; width:22px; height:22px; border-radius:50%; border:0; background:rgba(0,0,0,.08); color:var(--ink); cursor:pointer; font-size:15px; line-height:20px; padding:0; }
@@ -126,7 +126,7 @@
   .val { width:64px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums; }
   .row input[type=number] { width:80px; padding:5px 8px; border-radius:7px; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.7); font:inherit; color:var(--ink); }
   .segc { display:inline-flex; flex-wrap:wrap; background:rgba(255,255,255,.55); border-radius:9px; padding:2px; }
-  .segc button { border:0; background:none; padding:5px 11px; border-radius:7px; font:600 12px inherit; font-family:inherit; color:#6b4a38; cursor:pointer; }
+  .segc button { border:0; background:none; padding:5px 11px; border-radius:7px; font:600 12px inherit; font-family:inherit; color:#6e6e73; cursor:pointer; }
   .segc button.on { background:var(--accent); color:#fff; }
   .swatches { display:flex; flex-wrap:wrap; gap:6px; flex:1; }
   .sw { width:32px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(0,0,0,.1); padding:0; }
@@ -146,7 +146,7 @@
   .warn { color:#c2410c; font-weight:700; }
   .note { font-size:12px; color:var(--muted); margin:8px 0; }
   .snack { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200; display:flex; gap:10px; align-items:center;
-    background:rgba(35,20,12,.88); color:#fff; padding:10px 16px; border-radius:12px; font-size:13px; max-width:calc(100% - 32px); }
+    background:rgba(20,20,22,.88); color:#fff; padding:10px 16px; border-radius:12px; font-size:13px; max-width:calc(100% - 32px); }
   .spin { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:sp .8s linear infinite; flex:none; }
   @keyframes sp { to { transform:rotate(360deg); } }
   @media (max-width:640px) { .topbar .hint { display:none; } }
@@ -165,60 +165,120 @@
   body.editor .sidecol { width:330px; flex:none; overflow:auto; padding-right:2px; }
   body.editor .stagecol:empty { display:none; }
   body.editor .stagecol:empty + .sidecol { width:auto; flex:1; }
-  body.editor .sidecol .row > label { width:100px; }
+  /* side panel: label above its control, control uses the full width */
+  body.editor .sidecol .row { flex-wrap:wrap; gap:8px 10px; margin:14px 0; }
+  body.editor .sidecol .row > label { width:100%; font-weight:600; color:#3a3a3e; }
+  body.editor .sidecol .row input[type=range] { min-width:0; }
+  body.editor .sidecol .swatches { gap:7px; }
   .helpok { display:flex; align-items:center; gap:8px; font-weight:600; color:#15803d; margin:4px 0 12px; }
   .helpok i { width:9px; height:9px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.2); }
   .steps { margin:0; padding-left:20px; font-size:13px; line-height:1.9; user-select:text; }
 
   /* ---- warm glass panels (tool windows, help, progress card) ---- */
   .modal { border-radius:26px; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
-    background:linear-gradient(180deg,#ffcfa9 0%,#ffe2cf 16%,#fff1e8 52%,#fff6f1 100%);
+    background:linear-gradient(180deg,#ffffff 0%,#ffffff 16%,#fbfbfc 52%,#f8f8fa 100%);
     border:1px solid rgba(255,255,255,.85);
-    box-shadow:0 40px 90px rgba(90,30,5,.32), 0 4px 12px rgba(90,30,5,.12), inset 0 1.5px 0 rgba(255,255,255,.95); }
+    box-shadow:0 40px 90px rgba(0,0,0,.32), 0 4px 12px rgba(0,0,0,.12), inset 0 1.5px 0 rgba(255,255,255,.95); }
   body.editor .modal, body.help .modal { animation:materialize .42s cubic-bezier(.2,.9,.25,1) both; }
   @keyframes materialize { from { opacity:0; transform:scale(.965); filter:blur(8px); } }
   .mhead { height:54px; }
-  .mtitle { font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; font-size:15px; font-weight:650; letter-spacing:-.01em; color:#4a2412; }
-  .x { left:16px; top:16px; width:22px; height:22px; background:rgba(120,50,20,.12); color:#6a3820; transition:background .15s, transform .1s; }
+  .mtitle { font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; font-size:15px; font-weight:650; letter-spacing:-.01em; color:#1d1d1f; }
+  .x { left:16px; top:16px; width:22px; height:22px; background:rgba(0,0,0,.12); color:#2c2c31; transition:background .15s, transform .1s; }
   .x:hover { background:#ff5f57; color:#fff; } .x:active { transform:scale(.92); }
-  .mfoot { padding:14px 20px 16px; border-top:1px solid rgba(160,80,40,.10); }
+  .mfoot { padding:14px 20px 16px; border-top:1px solid rgba(0,0,0,.10); }
   .btn { border-radius:12px; padding:8px 16px; font-weight:600; transition:transform .1s, filter .15s, box-shadow .15s; }
   .btn:active { transform:scale(.97); }
   .btn.primary { background:linear-gradient(180deg,#ff8f52,#ee5320 60%,#e2451c); box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px rgba(230,80,30,.35); }
-  .btn.soft { background:rgba(255,255,255,.7); box-shadow:inset 0 1px 0 #fff, 0 1px 3px rgba(120,50,20,.12); color:#5a2e18; }
-  .preview { border-radius:18px; padding:16px; box-shadow:inset 0 1px 3px rgba(120,50,20,.12);
-    background:repeating-conic-gradient(rgba(160,90,50,.06) 0 25%, rgba(255,255,255,.55) 0 50%) 0 0/18px 18px; }
-  .preview canvas, .preview > img, .cropstage { box-shadow:0 10px 30px rgba(90,30,5,.18); border-radius:4px; }
-  .row { margin:12px 0; font-size:12.5px; } .row > label { color:#8a5a40; font-weight:500; }
-  .val { color:#8a5a40; }
-  .segc { background:rgba(255,255,255,.62); border-radius:11px; padding:3px; box-shadow:inset 0 1px 2px rgba(120,50,20,.10); }
+  .btn.soft { background:rgba(255,255,255,.7); box-shadow:inset 0 1px 0 #fff, 0 1px 3px rgba(0,0,0,.12); color:#2c2c31; }
+  .preview { border-radius:18px; padding:16px; box-shadow:inset 0 1px 3px rgba(0,0,0,.12);
+    background:repeating-conic-gradient(rgba(0,0,0,.06) 0 25%, rgba(255,255,255,.55) 0 50%) 0 0/18px 18px; }
+  .preview canvas, .preview > img, .cropstage { box-shadow:0 10px 30px rgba(0,0,0,.18); border-radius:4px; }
+  .row { margin:12px 0; font-size:12.5px; } .row > label { color:#6e6e73; font-weight:500; }
+  .val { color:#6e6e73; }
+  .segc { background:rgba(255,255,255,.62); border-radius:11px; padding:3px; box-shadow:inset 0 1px 2px rgba(0,0,0,.10); }
   .segc button { border-radius:8px; padding:6px 12px; transition:background .18s, color .18s; }
   .segc button.on { background:linear-gradient(180deg,#ff8f52,#ee5320); box-shadow:0 2px 6px rgba(230,80,30,.35); }
-  .row input[type=number], .row input[type=text] { border-radius:9px; border:1px solid rgba(160,80,40,.18); background:rgba(255,255,255,.8); padding:6px 9px; font:inherit; color:#4a2412; }
+  .row input[type=number], .row input[type=text] { border-radius:9px; border:1px solid rgba(0,0,0,.18); background:rgba(255,255,255,.8); padding:6px 9px; font:inherit; color:#1d1d1f; }
   input[type=range] { -webkit-appearance:none; appearance:none; height:22px; background:transparent; }
   input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:4px; background:linear-gradient(90deg,#ee5320,#ff9a5e); opacity:.85; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; margin-top:-8px; border-radius:50%; background:#fff;
-    box-shadow:0 1px 1px rgba(0,0,0,.08), 0 3px 8px rgba(120,40,10,.3); transition:transform .12s; }
+    box-shadow:0 1px 1px rgba(0,0,0,.08), 0 3px 8px rgba(0,0,0,.3); transition:transform .12s; }
   input[type=range]:active::-webkit-slider-thumb { transform:scale(1.12); }
   .sw { border-radius:8px; width:34px; height:26px; transition:transform .12s; } .sw:hover { transform:translateY(-1px); }
   .sw.on { border-color:#fff; box-shadow:0 0 0 2px #ee5320; }
   body.editor .sidecol { padding:4px 4px 8px; }
+
+  /* ---- Home window ---- */
+  body.home { background:#f7f7f9; overflow:auto; }
+  body.home #desk, body.home .topbar, body.home .empty { display:none; }
+  .home { max-width:980px; margin:0 auto; padding:18px 40px 48px; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; color:#1d1d1f; }
+  .hh { display:flex; align-items:center; justify-content:space-between; height:44px; -webkit-app-region:drag; margin-right:140px; }
+  .hh .brand { display:flex; align-items:center; gap:10px; font-size:15px; } .hh .brand svg { width:30px; height:30px; }
+  .hh .pill { font-size:12px; color:#3a7d44; background:#eef7ef; border:1px solid #d7ecd9; padding:4px 10px; border-radius:999px; -webkit-app-region:no-drag; }
+  .home h1 { font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif; font-size:34px; line-height:1.1; letter-spacing:-.02em; margin:26px 0 6px; font-weight:700; }
+  .home .lead { color:#6e6e73; margin:0 0 22px; font-size:14px; }
+  .hcard { display:grid; grid-template-columns:1fr 220px; gap:24px; background:#fff; border:1px solid #e8e8ec; border-radius:22px; padding:26px 28px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.05); transition:border-color .15s, box-shadow .15s, transform .15s; }
+  .hcard.over { border-color:#ee5320; box-shadow:0 0 0 4px rgba(238,83,32,.12); transform:scale(1.005); }
+  .badge { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em; color:#ee5320; background:#fff2ec; border-radius:999px; padding:4px 10px; }
+  .hcard h2 { font-size:24px; letter-spacing:-.01em; margin:12px 0 4px; } .hcard p { color:#6e6e73; margin:0 0 16px; font-size:13.5px; }
+  .pick { font-size:14px; padding:10px 18px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 0; }
+  .chip { display:inline-flex; align-items:center; gap:7px; background:#f4f4f6; border:1px solid #e8e8ec; border-radius:999px; padding:5px 6px 5px 11px; font-size:12.5px; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chip svg.i { width:15px; height:15px; flex:none; }
+  .chip button { border:0; background:#e6e6ea; width:20px; height:20px; border-radius:50%; cursor:pointer; color:#555; flex:none; }
+  .acts { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .act { display:inline-flex; align-items:center; gap:8px; border:1px solid #e3e3e8; background:#fff; border-radius:12px; padding:9px 14px; font:600 13px inherit; font-family:inherit; color:#1d1d1f; cursor:pointer; transition:all .15s; }
+  .act svg.i { width:17px; height:17px; } .act kbd { font:600 10.5px inherit; font-family:inherit; color:#8e8e93; background:#f2f2f5; border:0; border-radius:5px; padding:2px 6px; }
+  .act:hover:not(:disabled) { border-color:#ee5320; color:#ee5320; } .act.on { background:#ee5320; border-color:#ee5320; color:#fff; } .act.on kbd { background:rgba(255,255,255,.25); color:#fff; }
+  .act:disabled { opacity:.45; cursor:default; }
+  .hr { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; }
+  .hr .art svg { width:150px; height:150px; filter:drop-shadow(0 14px 24px rgba(0,0,0,.10)); transform:rotate(-6deg); }
+  .hr small { color:#8e8e93; font-size:11.5px; }
+  .home h3 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#8e8e93; margin:30px 0 10px; }
+  .recent { background:#fff; border:1px solid #e8e8ec; border-radius:18px; overflow:hidden; }
+  .recent .row { display:flex; align-items:center; gap:12px; padding:11px 16px; margin:0; border-top:1px solid #f0f0f3; } .recent .row:first-child { border-top:0; }
+  .recent .ri { width:32px; height:32px; border-radius:9px; background:#fff2ec; color:#ee5320; display:grid; place-items:center; flex:none; }
+  .recent .rn { flex:1; min-width:0; } .recent .rn b { display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .recent .rn small { color:#8e8e93; font-size:11.5px; }
+  .recent .none { padding:22px; color:#8e8e93; font-size:13px; text-align:center; }
+
+  /* ---- Nashi-style tool window ---- */
+  .mhead.big { height:auto; display:flex; align-items:center; gap:14px; padding:18px 22px; border-bottom:1px solid #ededf0; -webkit-app-region:drag; }
+  .mhead.big .x { position:static; flex:none; }
+  .ticon { width:48px; height:48px; border-radius:14px; background:#fff2ec; color:#ee5320; display:grid; place-items:center; flex:none; }
+  .ticon svg.i { width:24px; height:24px; }
+  .ttext { flex:1; min-width:0; } .ttext .mtitle { font-size:19px; text-align:left; } .ttext small { color:#6e6e73; font-size:12.5px; }
+  .tbadge { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:#3a3a3e; background:#f2f2f5; border-radius:999px; padding:5px 11px; -webkit-app-region:no-drag; }
+  .tbadge svg.i { width:13px; height:13px; }
+  body.editor .mbody { padding:0; gap:0; }
+  body.editor .stagecol { flex-direction:column; padding:18px 22px; gap:10px; }
+  body.editor .sidecol { width:340px; padding:18px 22px; border-left:1px solid #ededf0; background:#fbfbfc; }
+  .colhead { display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:700; letter-spacing:.08em; color:#8e8e93; }
+  .colhead .dims { font-family:ui-monospace,Consolas,monospace; letter-spacing:0; font-weight:500; }
+  body.editor .stagecol .preview { background:#141416; border-radius:18px; box-shadow:none; }
+  .fname { display:flex; align-items:center; gap:6px; color:#6e6e73; font-size:12px; } .fname svg.i { width:14px; height:14px; }
+  .guide { color:#6e6e73; font-size:12.5px; line-height:1.55; margin:8px 0 14px; }
+  .safe { margin-left:auto; margin-right:14px; color:#8e8e93; font-size:12px; }
+  body.editor .mfoot { padding:14px 22px; border-top:1px solid #ededf0; }
+  body.editor .mfoot .btn.soft { display:inline-flex; align-items:center; gap:6px; background:transparent; box-shadow:none; }
+  body.editor .mfoot .btn.soft svg.i { width:15px; height:15px; }
+  body.editor .mfoot .btn.primary { padding:11px 20px; font-size:14px; }
 
   /* progress card */
   body.toast { background:transparent; }
   /* alpha 1/255: invisible, but Windows still hit-tests it, so the file drag reaches the hidden wheel */
   body.wheel.armed::before { content:''; position:fixed; inset:0; border-radius:50%; background:rgba(128,128,128,.004); }
   .tcard { position:fixed; left:10px; right:10px; top:10px; padding:16px 18px 16px 18px; border-radius:20px; display:grid; grid-template-columns:auto 1fr auto; gap:6px 14px; align-items:center;
-    background:linear-gradient(180deg,rgba(255,248,243,.97),rgba(255,229,212,.96)); border:1px solid rgba(255,255,255,.85);
-    box-shadow:0 18px 40px rgba(90,30,5,.28), inset 0 1px 0 #fff; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; color:#4a2412;
+    background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(247,247,249,.98)); border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 18px 40px rgba(0,0,0,.28), inset 0 1px 0 #fff; font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; color:#1d1d1f;
     transition:opacity .25s, transform .35s cubic-bezier(.2,.9,.25,1), filter .25s; }
   .tcard.out { opacity:0; transform:translateY(8px) scale(.97); filter:blur(6px); }
   .tcard .ic { grid-row:1 / span 2; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff;
     background:linear-gradient(180deg,#ff8f52,#e2451c); box-shadow:0 4px 10px rgba(230,80,30,.35); }
   .tcard.error .ic { background:linear-gradient(180deg,#ff6b6b,#d42a2a); }
   .tcard .tt { font-weight:650; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .tcard .ts { font-size:11.5px; color:#8a5a40; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; grid-column:2; }
-  .tcard .bar { grid-column:1 / -1; height:4px; border-radius:4px; background:rgba(160,80,40,.14); overflow:hidden; margin-top:4px; }
+  .tcard .ts { font-size:11.5px; color:#6e6e73; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; grid-column:2; }
+  .tcard .bar { grid-column:1 / -1; height:4px; border-radius:4px; background:rgba(0,0,0,.14); overflow:hidden; margin-top:4px; }
   .tcard .bar i { display:block; height:100%; width:35%; border-radius:4px; background:linear-gradient(90deg,#ff9a5e,#ee5320); animation:indet 1.1s ease-in-out infinite; }
   .tcard.done .bar i, .tcard.error .bar i { width:100%; animation:none; transition:width .3s; }
   .tcard.error .bar i { background:#e04848; }
@@ -258,7 +318,7 @@ const I18N = {
     Scale: 'Ölçek', Width: 'Genişlik', Height: 'Yükseklik', 'Keep ratio': 'Oranı koru', Copy: 'Kopyala', pages: 'sayfalar',
   },
   en: {
-    'bırak': 'drop', 'daha fazlası': 'more options', 'aç': 'open', Göster: 'Show', Kaydedildi: 'Saved', 'İşleniyor…': 'Working…', Kapat: 'Close', Kaydet: 'Save', Tamam: 'OK', Boyut: 'Size', Stil: 'Style', Araç: 'Tool', Renk: 'Colour',
+    'dosya kaydedildi': 'files saved', 'ÖNİZLEME': 'PREVIEW', 'SENİN DOKUNUŞUN': 'MAKE IT YOURS', 'Orijinal dosya korunur': 'Original stays safe', 'bırak': 'drop', 'daha fazlası': 'more options', 'aç': 'open', Göster: 'Show', Kaydedildi: 'Saved', 'İşleniyor…': 'Working…', Kapat: 'Close', Kaydet: 'Save', Tamam: 'OK', Boyut: 'Size', Stil: 'Style', Araç: 'Tool', Renk: 'Colour',
     Kalınlık: 'Thickness', Kalite: 'Quality', 'Maks. kenar': 'Max. edge', Orijinal: 'Original',
     'Gizlemek istediğin alanların üstüne kutu çiz.': 'Draw boxes over the areas you want to hide.',
     'Arka planda çalışıyor': 'Running in the background',
@@ -309,6 +369,7 @@ const ICON = {
   flip: '<path d="M12 3v18"/><path d="M8 7l-5 5 5 5zM16 7l5 5-5 5z"/>',
   gray: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>',
 };
+const LOGO_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 128 128\" class=\"logo\"><defs><linearGradient id=\"dsHot\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ff9a5a\"/><stop offset=\"1\" stop-color=\"#e2451c\"/></linearGradient><linearGradient id=\"dsTile\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"1\" stop-color=\"#f2f2f5\"/></linearGradient></defs><rect x=\"4\" y=\"4\" width=\"120\" height=\"120\" rx=\"28\" fill=\"url(#dsTile)\" stroke=\"#e3e3e8\" stroke-width=\"2\"/><path d=\"M42.79 22.06A47 47 0 0 1 85.21 22.06L73.18 42.91A23 23 0 0 0 54.82 42.91Z\" fill=\"url(#dsHot)\" stroke=\"url(#dsHot)\" stroke-width=\"5\" stroke-linejoin=\"round\"/><path d=\"M89.71 24.66A47 47 0 0 1 110.93 61.40L86.85 61.41A23 23 0 0 0 77.67 45.51Z\" fill=\"#ececf0\" stroke=\"#ececf0\" stroke-width=\"5\" stroke-linejoin=\"round\"/><path d=\"M110.93 66.60A47 47 0 0 1 89.71 103.34L77.67 82.49A23 23 0 0 0 86.85 66.59Z\" fill=\"#ececf0\" stroke=\"#ececf0\" stroke-width=\"5\" stroke-linejoin=\"round\"/><path d=\"M85.21 105.94A47 47 0 0 1 42.79 105.94L54.82 85.09A23 23 0 0 0 73.18 85.09Z\" fill=\"#ececf0\" stroke=\"#ececf0\" stroke-width=\"5\" stroke-linejoin=\"round\"/><path d=\"M38.29 103.34A47 47 0 0 1 17.07 66.60L41.15 66.59A23 23 0 0 0 50.33 82.49Z\" fill=\"#ececf0\" stroke=\"#ececf0\" stroke-width=\"5\" stroke-linejoin=\"round\"/><path d=\"M17.07 61.40A47 47 0 0 1 38.29 24.66L50.33 45.51A23 23 0 0 0 41.15 61.41Z\" fill=\"#ececf0\" stroke=\"#ececf0\" stroke-width=\"5\" stroke-linejoin=\"round\"/><circle cx=\"64\" cy=\"64\" r=\"15.5\" fill=\"#ffffff\" stroke=\"#e3e3e8\" stroke-width=\"1.5\"/><path d=\"M64 54.5 72.5 63.5H68V71.5H60V63.5H55.5Z\" fill=\"#1d1d1f\" stroke=\"#1d1d1f\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/></svg>";
 const svgIcon = name => `<svg class="i" viewBox="0 0 24 24">${ICON[name]}</svg>`;
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 const baseName = n => n.replace(/\.[^.]+$/, '');
@@ -519,7 +580,7 @@ function renderWheel() {
     <svg class="main" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}">
       <defs>
         <radialGradient id="segfill" cx="${C}" cy="${C}" r="${R2}" gradientUnits="userSpaceOnUse">
-          <stop offset="${R1 / R2}" stop-color="#fff7f1" stop-opacity=".97"/><stop offset="1" stop-color="#ffe0cb" stop-opacity=".94"/></radialGradient>
+          <stop offset="${R1 / R2}" stop-color="#ffffff" stop-opacity=".97"/><stop offset="1" stop-color="#f2f2f5" stop-opacity=".94"/></radialGradient>
         <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9858"/><stop offset=".55" stop-color="#f4622b"/><stop offset="1" stop-color="#d93d16"/></linearGradient>
         <filter id="hotglow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#e2451c" flood-opacity=".45"/></filter>
       </defs>${segs}</svg>`;
@@ -1014,30 +1075,59 @@ const ACTIONS = {
 for (const k of Object.keys(ACTIONS)) ACTIONS[k] = { ...COMMON_ACTIONS, ...ACTIONS[k] };
 
 // ---------- modal + controls
+// Per-tool words for the big tool window: [icon, subtitle, guidance, save button] in TR / EN.
+const TOOL_META = {
+  'Crop Image': ['crop', ['İyi kısmı tut.', 'Keep the good part.'], ['Saklamak istediğin alanı seç. İçinden sürükleyerek taşı, köşelerden boyutlandır.', 'Select the area to keep. Drag inside to move; drag a handle to resize.'], ['Kırpılmış kopyayı kaydet', 'Save cropped copy']],
+  'Add BG': ['image', ['Sahneyi hazırla.', 'Set the scene.'], ['Bir arka plan seç; boşluk, köşe ve gölgeyle çerçeveyi ayarla.', 'Pick a background, then tune padding, corners and shadow.'], ['Arka planla kaydet', 'Save with background']],
+  'Edit Image': ['sliders', ['Işığı ve rengi ayarla.', 'Tune light and colour.'], ['Kaydırıcılarla parlaklık, kontrast ve rengi değiştir.', 'Use the sliders to change brightness, contrast and colour.'], ['Düzenlenmiş kopyayı kaydet', 'Save edited copy']],
+  'Redact': ['eyeoff', ['Görünmemesi gerekeni kapat.', 'Hide what should stay private.'], ['Gizlenecek alanların üstüne kutu çiz; siyah, bulanık ya da pikselli.', 'Draw boxes over what to hide — black, blurred or pixelated.'], ['Gizlenmiş kopyayı kaydet', 'Save redacted copy']],
+  'Annotate': ['pen', ['Göster, anlat.', 'Point it out.'], ['Kalem, vurgu, ok ya da kutu seç ve resmin üstüne çiz.', 'Pick a pen, highlighter, arrow or box and draw on the image.'], ['İşaretli kopyayı kaydet', 'Save marked-up copy']],
+  'Compress': ['compress', ['Aynı görüntü, daha küçük dosya.', 'Same picture, smaller file.'], ['Kaliteyi ve en büyük kenarı seç; yeni boyut hemen görünür.', 'Choose quality and maximum edge; the new size shows right away.'], ['Küçük kopyayı kaydet', 'Save smaller copy']],
+  'Metadata': ['tag', ['Fotoğrafın içindeki gizli bilgiler.', 'What the photo knows about itself.'], ['Konum (GPS), cihaz ve tarih bilgilerini görüp temizleyebilirsin.', 'See location (GPS), device and date details, and strip them.'], ['Temiz kopyayı kaydet', 'Save clean copy']],
+  'Resize': ['resize', ['Tam istediğin ölçü.', 'Exactly the size you need.'], ['Yüzdeyle ya da piksel olarak ayarla; oran istersen korunur.', 'Set a percentage or exact pixels; the ratio can stay locked.'], ['Yeni boyutu kaydet', 'Save resized copy']],
+  'Change Extension': ['rename', ['Aynı dosya, yeni uzantı.', 'Same file, new extension.'], [], ['Uygula', 'Apply']],
+  'Hash': ['hash', ['Dosyanın parmak izi.', 'The file\'s fingerprint.'], [], ['Tamam', 'Done']],
+};
+// set by the tool window before a tool opens: { name, ext } of the file being edited
+let EDIT_INFO = null;
 function openModal(title, { primary = 'Kaydet', reset = true } = {}) {
+  const meta = DESKTOP_MODE === 'editor' ? TOOL_META[title] : null;
+  const L = (pair) => pair?.[LANG === 'tr' ? 0 : 1];
+  if (meta?.[3]) primary = L(meta[3]);
   let resolve;
   const result = new Promise(r => resolve = r);
   const body = h('div', { class: 'mbody' });
   const resetBtn = h('button', { class: 'btn soft' }, t('Reset'));
   const primaryBtn = h('button', { class: 'btn primary' }, t(primary));
   title = t(title);
+  let head = h('div', { class: 'mhead' }, h('button', { class: 'x', title: t('Kapat'), html: '&times;', onclick: () => finish(null) }), h('div', { class: 'mtitle' }, title));
+  let foot = h('div', { class: 'mfoot' }, reset ? resetBtn : h('span'), primaryBtn);
+  const sizeLabel = h('span', { class: 'dims' }, EDIT_INFO?.dims || '');
   if (DESKTOP_MODE === 'editor') {
     // Big tool window: image on the left filling the space, controls in a side column.
     const stage = h('div', { class: 'stagecol' }), side = h('div', { class: 'sidecol' });
+    const stageHead = h('div', { class: 'colhead' }, h('span', {}, t('ÖNİZLEME')), sizeLabel);
+    const sideHead = h('div', { class: 'colhead' }, h('span', {}, t('SENİN DOKUNUŞUN')));
+    const guide = L(meta?.[2]);
     body.append(stage, side);
-    body.append = (...nodes) => nodes.forEach(n => n && (n.classList?.contains('preview') ? stage : side).append(n));
+    stage.append(stageHead); side.append(sideHead); if (guide) side.append(h('p', { class: 'guide' }, guide));
+    if (EDIT_INFO) stage.append(h('div', { class: 'fname', html: svgIcon('file') }, EDIT_INFO.name));
+    body.append = (...nodes) => nodes.forEach(n => n && (n.classList?.contains('preview') ? stage.insertBefore(n, stage.querySelector('.fname')) : side.append(n)));
+    if (meta) {
+      head = h('div', { class: 'mhead big' }, h('button', { class: 'x', title: t('Kapat'), html: '&times;', onclick: () => finish(null) }),
+        h('div', { class: 'ticon', html: svgIcon(meta[0]) }), h('div', { class: 'ttext' }, h('div', { class: 'mtitle' }, title), h('small', {}, L(meta[1]))),
+        EDIT_INFO?.ext ? h('span', { class: 'tbadge', html: svgIcon('file') + EDIT_INFO.ext.toUpperCase() }) : null);
+      resetBtn.innerHTML = svgIcon('rotate') + ' ' + t('Reset');
+      foot = h('div', { class: 'mfoot' }, reset ? resetBtn : h('span'), h('span', { class: 'safe' }, '🔒 ' + t('Orijinal dosya korunur')), primaryBtn);
+    }
   }
-  const back = h('div', { class: 'backdrop' },
-    h('div', { class: 'modal' },
-      h('div', { class: 'mhead' }, h('button', { class: 'x', title: t('Kapat'), html: '&times;', onclick: () => finish(null) }), h('div', { class: 'mtitle' }, title)),
-      body,
-      h('div', { class: 'mfoot' }, reset ? resetBtn : h('span'), primaryBtn)));
+  const back = h('div', { class: 'backdrop' }, h('div', { class: 'modal' }, head, body, foot));
   back.addEventListener('pointerdown', e => { if (e.target === back) finish(null); });
   const onKey = e => { if (e.key === 'Escape') finish(null); };
   window.addEventListener('keydown', onKey);
   document.body.append(back);
   function finish(v) { window.removeEventListener('keydown', onKey); back.remove(); resolve(v); }
-  const m = { body, result, finish };
+  const m = { body, result, finish, setSize: (w, hh) => { sizeLabel.textContent = `${w} × ${hh}`; } };
   resetBtn.onclick = () => m.onReset?.();
   primaryBtn.onclick = async () => {
     primaryBtn.disabled = true;
@@ -1414,17 +1504,20 @@ const MIME = { pdf: 'application/pdf', zip: 'application/zip', png: 'image/png',
   avif: 'image/avif', svg: 'image/svg+xml', txt: 'text/plain', md: 'text/markdown', csv: 'text/csv', json: 'application/json', log: 'text/plain', html: 'text/html', htm: 'text/html', xml: 'text/xml' };
 const dirOf = p => p ? p.replace(/[\\/][^\\/]*$/, '') : '';
 async function saveOutputs(outs, srcPath) {
+  // returns the paths written, so the Home window can list them
   if (outs[0].renameTo) {
     const p = await window.desktop.rename(srcPath, outs[0].renameTo);
-    return window.desktop.notify('✓ ' + p.split(/[\\/]/).pop(), p);
+    window.desktop.notify('✓ ' + p.split(/[\\/]/).pop(), p);
+    return [p];
   }
-  let last;
-  for (const o of outs) last = await window.desktop.save(dirOf(srcPath), o.name, new Uint8Array(await o.blob.arrayBuffer()));
-  window.desktop.notify('✓ ' + (outs.length > 1 ? `${outs.length} dosya kaydedildi` : outs[0].name), last);
+  const saved = [];
+  for (const o of outs) saved.push(await window.desktop.save(dirOf(srcPath), o.name, new Uint8Array(await o.blob.arrayBuffer())));
+  window.desktop.notify('✓ ' + (outs.length > 1 ? `${outs.length} ${t('dosya kaydedildi')}` : outs[0].name), saved[saved.length - 1]);
+  return saved;
 }
 if (DESKTOP_MODE) document.body.classList.add('desktop', DESKTOP_MODE);
 // Tool and help windows must never swallow a file dropped on them (only the wheel takes drops).
-if (DESKTOP_MODE && DESKTOP_MODE !== 'wheel') for (const ev of ['dragover', 'drop']) window.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; });
+if (DESKTOP_MODE && DESKTOP_MODE !== 'wheel' && DESKTOP_MODE !== 'home') for (const ev of ['dragover', 'drop']) window.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; });
 
 if (DESKTOP_MODE === 'wheel') {
   const D = window.desktop;
@@ -1486,6 +1579,142 @@ if (DESKTOP_MODE === 'wheel') {
   });
 }
 
+
+// ---------- Home window (desktop app): pick or drop files, then Convert / Tools / File on the same wheel
+if (DESKTOP_MODE === 'home') {
+  const D = window.desktop, tr = LANG === 'tr', OS = new URLSearchParams(location.search).get('os');
+  const T = (a, b) => tr ? a : b;
+  const KEYS = OS === 'darwin' ? ['⇧', '⌃', '⌥'] : ['⇧', 'Ctrl', 'Alt'];
+  const FM = OS === 'darwin' ? 'Finder' : OS === 'linux' ? 'your file manager' : 'Explorer';
+  const FM_TR = OS === 'darwin' ? "Finder'da" : OS === 'linux' ? 'dosya yöneticisinde' : "Explorer'da";
+  let picked = []; // { file, path, name, kind }
+  let recent = []; try { recent = JSON.parse(localStorage.getItem('ds-recent') || '[]'); } catch {}
+  const saveRecent = () => { try { localStorage.setItem('ds-recent', JSON.stringify(recent.slice(0, 30))); } catch {} };
+  const picker = h('input', { type: 'file', multiple: '', hidden: '' });
+  const chips = h('div', { class: 'chips' });
+  const acts = h('div', { class: 'acts' });
+  const list = h('div', { class: 'recent' });
+  const MODES = [['convert', 'convert', T('Dönüştür', 'Convert'), KEYS[0]], ['tools', 'sliders', T('Araçlar', 'Tools'), KEYS[1]], ['actions', 'file', T('Dosya', 'File'), KEYS[2]]];
+  const modeBtns = MODES.map(([mode, icon, label, key]) => h('button', { class: 'act', 'data-mode': mode, html: `${svgIcon(icon)}<span>${label}</span><kbd>${key}</kbd>`, onclick: e => openFor(mode, e.currentTarget) }));
+  acts.append(...modeBtns);
+  const card = h('section', { class: 'hcard' },
+    h('div', { class: 'hl' },
+      h('div', { class: 'badge' }, '✦ ' + T('BURADAN BAŞLA', 'START HERE')),
+      h('h2', {}, T('Bir şey bırak.', 'Drop something good.')),
+      h('p', {}, T('Görseller, PDF\'ler, metinler, ZIP\'ler ve diğer her şey.', 'Images, PDFs, text, ZIPs and everything else.')),
+      h('button', { class: 'btn primary pick', onclick: () => picker.click() }, '＋ ' + T('Dosya seç', 'Choose files')),
+      chips, acts),
+    h('div', { class: 'hr' }, h('div', { class: 'art', html: LOGO_SVG }), h('small', {}, T(`${FM_TR} sürüklerken ${KEYS.join(' · ')}`, `Hold ${KEYS.join(' · ')} while dragging in ${FM}`))));
+  const root = h('main', { class: 'home' },
+    h('header', { class: 'hh' }, h('div', { class: 'brand', html: LOGO_SVG + '<b>Drag + Shift</b>' }), h('span', { class: 'pill' }, '● ' + T('Arka planda hazır', 'Ready in the background'))),
+    h('h1', {}, T('Dosyaların, yeni hâlleriyle.', 'Your files, in their next form.')),
+    h('p', { class: 'lead' }, T('Dönüştür, düzenle ve paylaş — hepsi bilgisayarında, internetsiz.', 'Convert, edit and share — all on your computer, offline.')),
+    card,
+    h('h3', {}, T('Son işler', 'Recent')), list);
+  document.body.append(root, picker);
+
+  const addFiles = files => {
+    for (const file of files) {
+      const path = D.pathFor(file);
+      if (!path || picked.some(p => p.path === path)) continue;
+      picked.push({ file, path, name: file.name, kind: kindOf(file.type, file.name) });
+    }
+    renderPicked();
+  };
+  function renderPicked() {
+    chips.innerHTML = '';
+    picked.forEach((p, i) => chips.append(h('span', { class: 'chip' }, svgIcon(p.kind === 'image' ? 'image' : p.kind === 'zip' ? 'zip' : 'file'), p.name,
+      h('button', { title: T('Listeden çıkar', 'Remove'), onclick: () => { picked.splice(i, 1); renderPicked(); } }, '×'))));
+    card.classList.toggle('has', picked.length > 0);
+    modeBtns.forEach(b => b.disabled = !picked.length);
+  }
+  function renderRecent() {
+    list.innerHTML = recent.length ? '' : `<div class="none">${T('Henüz bir şey yok. İlk dosyanı bırak.', 'Nothing yet. Drop your first file.')}</div>`;
+    recent.forEach(r => list.append(h('div', { class: 'row' }, h('span', { class: 'ri', html: svgIcon('file') }),
+      h('div', { class: 'rn' }, h('b', {}, r.name), h('small', {}, `${r.action} · ${new Date(r.at).toLocaleString(tr ? 'tr-TR' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' })}`)),
+      h('button', { class: 'btn soft', onclick: () => D.reveal(r.path) }, T('Göster', 'Show')))));
+  }
+  picker.onchange = () => { addFiles(picker.files); picker.value = ''; };
+  window.addEventListener('dragover', e => { if (isFileDrag(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; card.classList.add('over'); } });
+  window.addEventListener('dragleave', e => { if (!e.relatedTarget) card.classList.remove('over'); });
+  window.addEventListener('drop', e => { if (!isFileDrag(e)) return; e.preventDefault(); card.classList.remove('over'); addFiles(e.dataTransfer.files); });
+
+  // the wheel opens over the card; hover a slice and click it
+  function openFor(mode, from) {
+    if (!picked.length) return;
+    const r = card.getBoundingClientRect();
+    openWheel(r.left + r.width / 2, r.top + r.height / 2, picked[0].kind, mode);
+    modeBtns.forEach(b => b.classList.toggle('on', b === from));
+  }
+  const closeAll = () => { closeWheel(); modeBtns.forEach(b => b.classList.remove('on')); };
+  document.addEventListener('pointermove', e => updateHover(e.clientX, e.clientY));
+  document.addEventListener('pointerdown', e => {
+    if (!wheel.open || e.target.closest('.act')) return;
+    const act = wheel.hover, label = t(wheel.items.find(i => i.id === act)?.label || '');
+    closeAll();
+    if (act) run(act, label);
+  });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && wheel.open) closeAll(); });
+
+  async function run(act, label) {
+    const items = picked.filter(p => ACTIONS[p.kind]?.[act]);
+    if (!items.length) return;
+    const first = ACTIONS[items[0].kind][act];
+    const go = async (a, group) => {
+      D.progress({ state: 'working', title: label, sub: t('İşleniyor…') });
+      try {
+        group.forEach(f => { f.blob = f.file; f.url = URL.createObjectURL(f.file); });
+        const outs = await (a.multi ? a.run(group) : a.run(group[0]));
+        group.forEach(f => URL.revokeObjectURL(f.url));
+        if (!outs?.length) return D.progress({ state: 'hide' });
+        const saved = await saveOutputs(outs, group[0].path);
+        saved.forEach(p => recent.unshift({ name: p.split(/[\\/]/).pop(), path: p, action: label, at: Date.now() }));
+        if (outs[0].renameTo) { const it = group[0]; it.path = saved[0]; it.name = saved[0].split(/[\\/]/).pop(); renderPicked(); }
+        saveRecent(); renderRecent();
+      } catch (err) { console.error(err); D.notify('Hata: ' + (err.message || err)); }
+    };
+    if (first.multi) return go(first, items);
+    for (const f of items) {
+      const a = ACTIONS[f.kind][act];
+      if (a.modal) D.openEditor(f.path, act); else await go(a, [f]);
+    }
+  }
+  renderPicked(); renderRecent();
+  // dev/test hook: add a file by path (no screen input needed) and run an action on it
+  window.__homeTest = async (p, act, mode = 'convert') => {
+    const name = p.split(/[\\/]/).pop(), ext = (name.match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
+    const file = new File([await D.read(p)], name, { type: MIME[ext] || '' });
+    picked.push({ file, path: p, name, kind: kindOf(file.type, name) }); renderPicked();
+    openFor(mode, modeBtns.find(b => b.dataset.mode === mode));
+    const label = t(wheel.items.find(i => i.id === act)?.label || act);
+    await new Promise(r => setTimeout(r, 600));
+    closeAll(); await run(act, label);
+    return { recent: recent.slice(0, 2), chips: picked.length };
+  };
+}
+
+// ---------- self-test (npm start -- --smoke, and CI on Windows/macOS/Linux): real conversions + wheels
+if (DESKTOP_MODE === 'smoke') (async () => {
+  const results = [], check = async (name, fn) => { try { const v = await fn(); results.push({ name, ok: true, detail: v }); } catch (e) { results.push({ name, ok: false, detail: String(e?.message || e) }); } };
+  const mk = (blob, name) => ({ name, blob, kind: kindOf(blob.type, name), url: URL.createObjectURL(blob) });
+  const size = outs => { if (!outs?.length || !outs.every(o => o.blob?.size > 0)) throw new Error('empty output'); return outs.map(o => `${o.name} ${o.blob.size}B`).join(', '); };
+  const c = canvasOf(320, 200); const x = c.getContext('2d'); x.fillStyle = '#e2451c'; x.fillRect(0, 0, 320, 200); x.fillStyle = '#fff'; x.fillRect(20, 20, 120, 60);
+  const png = mk(await toBlob(c, 'image/png'), 'test.png');
+  const doc = new jspdf.jsPDF(); doc.text('Sayfa bir', 20, 20); doc.addPage(); doc.text('Sayfa iki', 20, 20);
+  const pdf = mk(new File([doc.output('blob')], 'test.pdf', { type: 'application/pdf' }), 'test.pdf');
+  const txt = mk(new Blob(['Merhaba şğıİ\nikinci satır'], { type: 'text/plain' }), 'not.txt');
+  const z = new JSZip(); z.file('a/b.txt', 'x'); const zip = mk(new File([await z.generateAsync({ type: 'blob' })], 't.zip', { type: 'application/zip' }), 't.zip');
+  for (const [f, id] of [[png, 'to-jpg'], [png, 'to-webp'], [png, 'to-ico'], [png, 'to-bmp'], [png, 'rotate'], [png, 'flip'], [png, 'gray'],
+    [pdf, 'docx'], [pdf, 'txt'], [pdf, 'png'], [pdf, 'split'], [pdf, 'rotpdf'], [txt, 'pdf'], [txt, 'docx'], [txt, 'html'], [zip, 'extract'], [zip, 'list'], [png, 'copy'], [png, 'base64']])
+    await check(`${f.kind}:${id}`, async () => size(await ACTIONS[f.kind][id].run(f)));
+  await check('image:to-pdf (2 images)', async () => size(await ACTIONS.image['to-pdf'].run([png, png])));
+  await check('pdf:merge', async () => size(await ACTIONS.pdf.merge.run([pdf, pdf])));
+  await check('any:zip (2 files)', async () => size(await ACTIONS.image.zip.run([png, txt])));
+  for (const mode of ['convert', 'tools', 'actions']) for (const kind of ['image', 'pdf', 'text', 'zip', 'other'])
+    await check(`wheel ${mode}/${kind}`, async () => { openWheel(400, 400, kind, mode); const n = wheel.el.querySelectorAll('.sg').length; closeWheel(); if (!n) throw new Error('no slices'); return `${n} slices`; });
+  window.desktop.smokeDone(results);
+})();
+
 if (DESKTOP_MODE === 'toast') {
   const ic = h('div', { class: 'ic', html: svgIcon('convert') }), tt = h('div', { class: 'tt' }), ts = h('div', { class: 'ts' });
   const go = h('button', { class: 'btn soft go', hidden: '' }, t('Göster')), bar = h('div', { class: 'bar' }, h('i'));
@@ -1526,6 +1755,8 @@ if (DESKTOP_MODE === 'editor') (async () => {
     const name = path.split(/[\\/]/).pop(), ext = (name.match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
     const blob = new Blob([await D.read(path)], { type: MIME[ext] || '' });
     const f = { name, blob, kind: kindOf(blob.type, name), url: URL.createObjectURL(blob) };
+    EDIT_INFO = { name, ext };
+    if (f.kind === 'image') { const img = await loadImage(f.url).catch(() => null); if (img) EDIT_INFO.dims = `${img.naturalWidth} × ${img.naturalHeight}`; }
     const a = ACTIONS[f.kind][tool];
     const outs = await (a.multi ? a.run([f]) : a.run(f));
     if (outs?.length) await saveOutputs(outs, path);

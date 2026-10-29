@@ -1,37 +1,14 @@
-// Drag + Shift: a background add-on for Windows. While dragging a file
-// anywhere, press Shift and a radial menu appears under the cursor. Drop the
-// file on an action; the result is saved next to the original file.
-// No windows of its own: it starts with Windows and lives in the tray.
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, nativeTheme, desktopCapturer } = require('electron');
+// Drag + Shift: a background add-on for Windows, macOS and Linux. While dragging a file in the
+// file manager, hold Shift (convert), Ctrl (tools) or Alt (file actions) and a radial menu appears
+// under the cursor. Drop the file on an action; the result is saved next to the original file.
+// It lives in the tray; the Home window offers the same tools for chosen or dropped files.
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, nativeTheme, desktopCapturer, systemPreferences } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const koffi = require('koffi');
+const os = require('os');
+const input = require('./input')();
 
-// Input is read by polling key state straight from Windows: global hooks are
-// unreliable here (Explorer's drag loop fakes a mouse-up, packaged builds
-// fail to register the hook).
-const user32 = koffi.load('user32.dll');
-const GetAsyncKeyState = user32.func('short __stdcall GetAsyncKeyState(int)');
-const POINT = koffi.struct('POINT', { x: 'long', y: 'long' });
-const GetCursorPos = user32.func('bool __stdcall GetCursorPos(_Out_ POINT *p)');
-const WindowFromPoint = user32.func('void * __stdcall WindowFromPoint(POINT p)');
-const GetAncestor = user32.func('void * __stdcall GetAncestor(void *h, uint flags)');
-const GetClassNameW = user32.func('int __stdcall GetClassNameW(void *h, _Out_ uint16_t *buf, int max)');
-const VK = { LBUTTON: 0x01, SHIFT: 0x10, CONTROL: 0x11, MENU: 0x12, ESCAPE: 0x1B };
-const isDown = vk => (GetAsyncKeyState(vk) & 0x8000) !== 0;
-const leftHeld = () => isDown(VK.LBUTTON);
-
-// Only drags that start in Explorer or on the desktop count, so Shift keeps its
-// normal meaning everywhere else (selecting text, moving windows, …).
-const FILE_WINDOWS = new Set(['CabinetWClass', 'ExploreWClass', 'Progman', 'WorkerW']);
-function classUnderCursor() {
-  const p = {};
-  if (!GetCursorPos(p)) return '';
-  const top = GetAncestor(WindowFromPoint(p), 2 /* GA_ROOT */);
-  const buf = new Uint16Array(128);
-  const n = GetClassNameW(top, buf, buf.length);
-  return String.fromCharCode(...buf.subarray(0, n));
-}
+const leftHeld = () => input.mouseDown();
 
 const WHEEL = 560; // the 480px wheel plus room for its shadow
 let wheelWin, tray;
@@ -48,9 +25,9 @@ const AT_LOGIN = process.argv.includes('--hidden');
 // Everything here is a few small windows with pre-blurred glass, so software rendering is just as
 // fast (wheel shows ~25 ms after Shift) and saves ~180 MB plus all GPU use for a tray add-on.
 app.disableHardwareAcceleration();
-if (!app.requestSingleInstanceLock()) { app.quit(); return; }
+if (!process.argv.includes('--smoke') && !app.requestSingleInstanceLock()) { app.quit(); return; }
 log('starting', AT_LOGIN ? '(login)' : '(manual)');
-app.on('second-instance', () => showHelp());
+app.on('second-instance', () => showHome());
 
 function createWheel() {
   wheelWin = new BrowserWindow({
@@ -78,8 +55,11 @@ function setLang(lang) {
 // It is going to be blurred anyway, so a quarter-resolution JPEG is plenty and costs almost nothing;
 // the wheel page blurs it once and reuses it, so pressing Shift never waits on it.
 let snap = null, snapping = false;
+const canCapture = () => process.platform === 'win32'
+  || (process.platform === 'darwin' && systemPreferences.getMediaAccessStatus('screen') === 'granted')
+  || (process.platform === 'linux' && process.env.XDG_SESSION_TYPE !== 'wayland');
 function captureScreen() {
-  if (snapping || (snap && Date.now() - snap.at < 1500)) return;
+  if (!canCapture() || snapping || (snap && Date.now() - snap.at < 1500)) return;
   snapping = true;
   const d = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: Math.round(d.size.width / 4), height: Math.round(d.size.height / 4) } })
@@ -118,19 +98,12 @@ function hideWheel() {
   setTimeout(() => { if (!shown) wheelWin.hide(); }, 320); // let the close spring finish
 }
 
-// Which wheel the held modifier asks for (exactly one of them, like Nashi's chords).
-function chordMode() {
-  const s = isDown(VK.SHIFT), c = isDown(VK.CONTROL), a = isDown(VK.MENU);
-  if (s + c + a !== 1) return null;
-  return s ? 'convert' : c ? 'tools' : 'actions';
-}
 function startWatching() {
   let mouse = false, chord = null, esc = false, downAt = null, dragging = false;
   setInterval(() => {
-    const m = leftHeld(), k = chordMode(), e = isDown(VK.ESCAPE);
+    const m = leftHeld(), k = input.chord(), e = input.escape();
     if (m && !mouse) {
-      const cls = classUnderCursor();
-      downAt = FILE_WINDOWS.has(cls) ? screen.getCursorScreenPoint() : null; // ignore drags in other apps
+      downAt = input.fromFileManager() ? screen.getCursorScreenPoint() : null; // ignore drags in other apps
       dragging = false;
     }
     const wasDragging = dragging;
@@ -149,7 +122,7 @@ function startWatching() {
     if (e && !esc) hideWheel();
     mouse = m; chord = k; esc = e;
   }, 20);
-  log('watching input');
+  log('watching input', input.name, input.reason || '');
 }
 
 // One tool window at a time: a new drop replaces the previous editor instead of
@@ -170,6 +143,24 @@ function openEditor(file, tool) {
   // we run in the background, so Windows would open the window behind the active app; lift it once
   const win = editorWin;
   win.once('ready-to-show', () => { win.setAlwaysOnTop(true); win.show(); win.focus(); setTimeout(() => !win.isDestroyed() && win.setAlwaysOnTop(false), 400); });
+}
+
+// ---------- Home window: choose or drop files and use every tool from one place
+let homeWin;
+const ICON = path.join(__dirname, 'build', 'icon.png');
+function showHome() {
+  if (homeWin && !homeWin.isDestroyed()) { if (homeWin.isMinimized()) homeWin.restore(); homeWin.show(); homeWin.focus(); return; }
+  homeWin = new BrowserWindow({
+    width: 1040, height: 760, minWidth: 760, minHeight: 560, show: false, title: 'Drag + Shift', icon: ICON, backgroundColor: '#f7f7f9',
+    titleBarStyle: 'hidden', ...(process.platform === 'darwin' ? { trafficLightPosition: { x: 16, y: 16 } } : { titleBarOverlay: { color: '#f7f7f9', symbolColor: '#1d1d1f', height: 44 } }),
+    webPreferences: { preload: path.join(__dirname, 'preload.js') },
+  });
+  homeWin.loadFile('index.html', { query: { mode: 'home', lang: settings.lang, os: process.platform } });
+  homeWin.once('ready-to-show', () => { homeWin.show(); homeWin.focus(); });
+  if (process.env.DS_HOMETEST) homeWin.webContents.once('did-finish-load', async () => { // dev only
+    const [file, act, mode] = process.env.DS_HOMETEST.split('|');
+    try { log('hometest', JSON.stringify(await homeWin.webContents.executeJavaScript(`__homeTest(${JSON.stringify(file)}, '${act}', '${mode || 'convert'}')`))); } catch (e) { log('hometest failed', e.message); }
+  });
 }
 
 let helpWin;
@@ -252,29 +243,60 @@ function trayIcon() {
   return nativeImage.createFromBitmap(buf, { width: s, height: s });
 }
 
+const AUTOSTART = path.join(os.homedir(), '.config', 'autostart', 'drag-shift.desktop');
+function getAutostart() {
+  if (process.platform === 'linux') return fs.existsSync(AUTOSTART);
+  return app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin;
+}
+function setAutostart(on) {
+  if (process.platform !== 'linux') return app.setLoginItemSettings({ openAtLogin: on, args: ['--hidden'] });
+  if (!on) return fs.rmSync(AUTOSTART, { force: true });
+  const exe = process.env.APPIMAGE || process.execPath; // an AppImage must be started through its own file
+  fs.mkdirSync(path.dirname(AUTOSTART), { recursive: true });
+  fs.writeFileSync(AUTOSTART, `[Desktop Entry]\nType=Application\nName=Drag + Shift\nExec="${exe}" --hidden\nX-GNOME-Autostart-enabled=true\n`);
+}
 function buildTray() {
   const tr = settings.lang === 'tr';
   tray.setToolTip(tr ? 'Drag + Shift — dosya sürüklerken Shift\'e bas' : 'Drag + Shift — press Shift while dragging a file');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: tr ? 'Drag + Shift açık' : 'Drag + Shift is running', enabled: false },
+    { label: tr ? "Drag + Shift'i aç" : 'Open Drag + Shift', click: showHome },
     { label: tr ? 'Nasıl kullanılır?' : 'How to use', click: showHelp },
     { label: tr ? 'Dil' : 'Language', submenu: [
       { label: 'Türkçe', type: 'radio', checked: tr, click: () => setLang('tr') },
       { label: 'English', type: 'radio', checked: !tr, click: () => setLang('en') },
     ] },
-    { label: tr ? 'Windows ile başlat' : 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin,
-      click: i => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--hidden'] }) },
+    { label: tr ? 'Bilgisayar açılınca başlat' : 'Start at login', type: 'checkbox', checked: getAutostart(), click: i => setAutostart(i.checked) },
     { type: 'separator' },
     { label: tr ? 'Kapat' : 'Quit', click: () => app.quit() },
   ]));
 }
 
-app.whenReady().then(() => {
+// --smoke: headless self-test used by CI on every platform; prints a report and exits 0/1
+if (process.argv.includes('--smoke')) {
+  app.whenReady().then(() => {
+    const report = { platform: process.platform, input: input.name, inputReason: input.reason || null, checks: [] };
+    try { input.mouseDown(); input.chord(); input.escape(); report.checks.push({ name: 'input backend polls', ok: input.name !== 'none' }); }
+    catch (e) { report.checks.push({ name: 'input backend polls', ok: false, detail: e.message }); }
+    const w = new BrowserWindow({ show: false, webPreferences: { preload: path.join(__dirname, 'preload.js') } });
+    ipcMain.once('smoke-done', (_e, results) => {
+      report.checks.push(...results);
+      const failed = report.checks.filter(c => !c.ok);
+      console.log(JSON.stringify(report, null, 2));
+      console.log(failed.length ? `SMOKE FAILED: ${failed.length} of ${report.checks.length}` : `SMOKE OK: ${report.checks.length} checks`);
+      if (process.env.DS_SMOKE_OUT) fs.writeFileSync(process.env.DS_SMOKE_OUT, JSON.stringify(report, null, 2));
+      app.exit(failed.length ? 1 : 0);
+    });
+    w.loadFile('index.html', { query: { mode: 'smoke', lang: 'tr' } });
+    setTimeout(() => { console.log('SMOKE TIMEOUT'); app.exit(2); }, 90000);
+  });
+} else app.whenReady().then(() => {
   app.setAppUserModelId('app.dragshift');
+  if (process.platform === 'darwin') app.dock?.hide();
   // Start with Windows by default (silently, via --hidden); the tray menu can turn it off.
   const firstRun = path.join(app.getPath('userData'), '.installed');
-  if (app.isPackaged && (!fs.existsSync(firstRun) || app.getLoginItemSettings().openAtLogin)) {
-    app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] });
+  if (app.isPackaged && (!fs.existsSync(firstRun) || getAutostart())) {
+    setAutostart(true);
     fs.writeFileSync(firstRun, '');
   }
   loadSettings();
@@ -295,9 +317,13 @@ app.whenReady().then(() => {
   });
   tray = new Tray(trayIcon());
   buildTray();
-  tray.on('click', showHelp);
-  if (!AT_LOGIN && !process.env.DS_PREVIEW) showHelp();
-  if (process.env.DS_EDITOR) openEditor(process.env.DS_EDITOR, process.env.DS_TOOL || 'addbg'); // dev only
+  tray.on('click', showHome);
+  if (!AT_LOGIN && !process.env.DS_PREVIEW) showHome();
+  if (process.env.DS_EDITOR) { // dev only: open a tool window and snapshot it (no screen input needed)
+    openEditor(process.env.DS_EDITOR, process.env.DS_TOOL || 'addbg');
+    if (process.env.DS_SHOT) setTimeout(async () => fs.writeFileSync(process.env.DS_SHOT, (await editorWin.webContents.capturePage()).toPNG()), 2500);
+  }
+  if (process.env.DS_SHOT_HOME) setTimeout(async () => fs.writeFileSync(process.env.DS_SHOT_HOME, (await homeWin.webContents.capturePage()).toPNG()), 2500);
 });
 
 app.on('window-all-closed', () => { /* keep running in the background */ });

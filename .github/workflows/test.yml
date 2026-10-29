@@ -4,7 +4,7 @@ name: Test
 # on Windows, macOS and Linux.
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 

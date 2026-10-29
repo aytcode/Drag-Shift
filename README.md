@@ -10,21 +10,21 @@ Windows için arka planda çalışan küçük bir eklenti: bir dosyayı sürükl
 
 ## Kullanım
 
-1. Explorer'da ya da masaüstünde bir dosyayı sürüklemeye başla.
-2. Sürüklerken **Shift**'e bas, imlecin altında cam bir çark açılır. **›** işaretli dilimler (Dönüştür, Daha fazla, Dosya) üzerinde **Shift**'e bas ya da biraz bekle: seçenekleri dışarı doğru açılır.
-3. Dosyayı bir dilimin üstüne bırak. **Esc** çarkı kapatır. Birden fazla dosya da sürüklenebilir.
+Explorer'da ya da masaüstünde bir dosyayı sürüklerken bir tuşa bas — imlecin altında o tuşun çarkı açılır, dosyayı bir dilimin üstüne bırak:
 
-| Dosya | Çarktaki işlemler (› = Shift ile açılan alt seçenekler) |
-|---|---|
-| PDF | DOCX, JPG, PNG, TXT, Sayfalara ayır, Birleştir (birden fazla PDF) · **Daha fazla ›** Döndür, Üstveri temizle · **Dosya ›** |
-| Görsel | Kırp, Düzenle, Arka plan, İşaretle, Gizle, Sıkıştır · **Dönüştür ›** PNG, JPG, WEBP, ICO, BMP, PDF (birden fazla görsel → tek PDF) · **Daha fazla ›** Döndür, Yatay çevir, Siyah-beyaz, Boyutlandır, Üstveri (EXIF/GPS) · **Dosya ›** |
-| ZIP | Klasöre çıkar, İçerik listesi, Optimize et, Uzantı, Kopya, Hash, Base64 |
-| Metin (.txt, .md, .csv…) | PDF, DOCX, HTML ve dosya işlemleri |
-| **Dosya ›** (her dosya) | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya oluştur, Hash (SHA-256/SHA-1), Base64 |
+| Tuş | Çark | Görsel | PDF | Metin | ZIP |
+|---|---|---|---|---|---|
+| **Shift** | Dönüştür | JPG, PNG, WEBP, PDF (birden fazla görsel → tek PDF), ICO, BMP | DOCX, JPG, PNG, TXT | PDF, DOCX, HTML | Çıkar, İçerik |
+| **Ctrl** | Araçlar | Kırp, Düzenle, Arka plan, İşaretle, Gizle, Sıkıştır, Boyutlandır, Döndür, Çevir, Siyah-beyaz, Üstveri | Sayfalara ayır, Birleştir, Döndür, Üstveri temizle | — | Çıkar, İçerik, Optimize et |
+| **Alt** | Dosya | Uzantı değiştir, ZIP'le (birden fazla dosya → tek ZIP), Kopya, Hash (SHA-256/SHA-1), Base64 | ← aynı | ← aynı | ← aynı |
+
+Çark açıkken diğer tuşa basınca o çarka geçilir. **Esc** kapatır. Çark yalnızca gerçekten dosya taşıyan bir sürüklemede görünür; metin seçerken ya da pencere taşırken çıkmaz.
 
 Çark, arkasındaki ekranı bulanıklaştıran gerçek bir buzlu cam gibi görünür ve yay animasyonuyla açılır; işlem sürerken ilerleme kartı çıkar, bitince **Göster** ile dosyaya gidilir.
 
 Her şey bilgisayarda, internetsiz çalışır; hiçbir dosya yüklenmez. Arayüz Türkçe (tepsi menüsünden İngilizceye geçilebilir).
+
+Çalışma prensibi (tuşa göre çark, dosya gelince görünen çark, ilerleme kartı) [Nashi](https://github.com/orkunisitmak/nashi-app)'den esinlenmiştir.
 
 ## Geliştirme
 

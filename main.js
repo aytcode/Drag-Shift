@@ -17,7 +17,7 @@ const GetCursorPos = user32.func('bool __stdcall GetCursorPos(_Out_ POINT *p)');
 const WindowFromPoint = user32.func('void * __stdcall WindowFromPoint(POINT p)');
 const GetAncestor = user32.func('void * __stdcall GetAncestor(void *h, uint flags)');
 const GetClassNameW = user32.func('int __stdcall GetClassNameW(void *h, _Out_ uint16_t *buf, int max)');
-const VK = { LBUTTON: 0x01, SHIFT: 0x10, ESCAPE: 0x1B };
+const VK = { LBUTTON: 0x01, SHIFT: 0x10, CONTROL: 0x11, MENU: 0x12, ESCAPE: 0x1B };
 const isDown = vk => (GetAsyncKeyState(vk) & 0x8000) !== 0;
 const leftHeld = () => isDown(VK.LBUTTON);
 
@@ -33,7 +33,7 @@ function classUnderCursor() {
   return String.fromCharCode(...buf.subarray(0, n));
 }
 
-const WHEEL = 680; // the wheel (652px with its option arc) plus room for the shadow
+const WHEEL = 560; // the 480px wheel plus room for its shadow
 let wheelWin, tray;
 let shown = false;
 
@@ -92,7 +92,7 @@ function captureScreen() {
     .finally(() => { snapping = false; });
 }
 
-function showWheel() {
+function showWheel(mode = 'convert') {
   const p = screen.getCursorScreenPoint(), db = screen.getDisplayNearestPoint(p).bounds;
   // keep the whole wheel (and its option arc) on the cursor's screen
   const x = Math.round(Math.min(Math.max(p.x - WHEEL / 2, db.x), db.x + db.width - WHEEL));
@@ -100,14 +100,14 @@ function showWheel() {
   wheelWin.setBounds({ x, y, width: WHEEL, height: WHEEL });
   lastDrop = p;
   const glass = snap && Date.now() - snap.at < 20000 ? snap.at : 0;
-  wheelWin.webContents.send('wheel:show', { cx: p.x - x, cy: p.y - y, winX: x, winY: y, glass });
+  wheelWin.webContents.send('wheel:show', { cx: p.x - x, cy: p.y - y, winX: x, winY: y, glass, mode });
   wheelWin.showInactive();
   wheelWin.moveTop(); // above any open tool window, so the drop always lands on the wheel
   shown = true;
   // hide once the button is really released (the drop is handled by the wheel window first)
   const poll = setInterval(() => {
     if (!shown) return clearInterval(poll);
-    if (!leftHeld()) { clearInterval(poll); setTimeout(hideWheel, 500); }
+    if (!leftHeld()) { clearInterval(poll); setTimeout(hideWheel, 150); } // the drop itself closes it at once
   }, 80);
 }
 
@@ -118,10 +118,16 @@ function hideWheel() {
   setTimeout(() => { if (!shown) wheelWin.hide(); }, 320); // let the close spring finish
 }
 
+// Which wheel the held modifier asks for (exactly one of them, like Nashi's chords).
+function chordMode() {
+  const s = isDown(VK.SHIFT), c = isDown(VK.CONTROL), a = isDown(VK.MENU);
+  if (s + c + a !== 1) return null;
+  return s ? 'convert' : c ? 'tools' : 'actions';
+}
 function startWatching() {
-  let mouse = false, shift = false, esc = false, downAt = null, dragging = false;
+  let mouse = false, chord = null, esc = false, downAt = null, dragging = false;
   setInterval(() => {
-    const m = leftHeld(), s = isDown(VK.SHIFT), e = isDown(VK.ESCAPE);
+    const m = leftHeld(), k = chordMode(), e = isDown(VK.ESCAPE);
     if (m && !mouse) {
       const cls = classUnderCursor();
       downAt = FILE_WINDOWS.has(cls) ? screen.getCursorScreenPoint() : null; // ignore drags in other apps
@@ -130,19 +136,18 @@ function startWatching() {
     const wasDragging = dragging;
     if (m && !dragging && downAt) {
       const p = screen.getCursorScreenPoint();
-      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, shift=' + s); }
+      if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 8) { dragging = true; log('drag start, chord=' + k); }
     }
     if (!m) dragging = false;
-    // Open when Shift is pressed during a drag, or a drag starts with Shift already held;
-    // another Shift press while open switches the wheel.
-    if (m && dragging && s && !shown && (!shift || !wasDragging)) { log('open wheel'); showWheel(); }
-    else if (s && !shift && shown) wheelWin.webContents.send('wheel:cycle');
+    // Open as soon as a chord is held during a drag (before or after it started);
+    // a different chord while the wheel is up switches to that wheel.
+    if (m && dragging && k && !shown) { log('open wheel', k); showWheel(k); }
+    else if (shown && k && k !== chord) wheelWin.webContents.send('wheel:mode', k);
     // The screen snapshot for the glass blocks this process for a few hundred ms, so it never runs
-    // before the wheel is shown: taken right after the drag starts, unless the wheel is already up
-    // (it would photograph itself) — then the wheel simply uses its plain tint.
+    // before the wheel is shown: taken right after the drag starts, unless the wheel is already up.
     if (dragging && !wasDragging && !shown) setTimeout(captureScreen, 0);
     if (e && !esc) hideWheel();
-    mouse = m; shift = s; esc = e;
+    mouse = m; chord = k; esc = e;
   }, 20);
   log('watching input');
 }
@@ -206,23 +211,31 @@ ipcMain.on('editor', (_e, file, tool) => { log('editor', tool, file); openEditor
 ipcMain.on('hide', hideWheel);
 ipcMain.on('close', e => BrowserWindow.fromWebContents(e.sender)?.close());
 // ---------- progress card (warm glass like the wheel), shown where the file was dropped
-let toastWin, toastTimer, lastDrop = null;
+let toastWin, toastTimer, toastReady = false, toastState = null, lastDrop = null;
 function showToast(state) {
+  toastState = state;
+  clearTimeout(toastTimer);
+  if (state.state === 'hide') { if (toastReady) toastWin.webContents.send('toast:state', state); return; }
   if (!toastWin || toastWin.isDestroyed()) {
+    toastReady = false;
     toastWin = new BrowserWindow({ width: 400, height: 120, show: false, frame: false, transparent: true, resizable: false,
       skipTaskbar: true, alwaysOnTop: true, focusable: false, hasShadow: false, webPreferences: { preload: path.join(__dirname, 'preload.js') } });
     toastWin.setAlwaysOnTop(true, 'screen-saver');
     toastWin.loadFile('index.html', { query: { mode: 'toast', lang: settings.lang } });
-    toastWin.webContents.once('did-finish-load', () => showToast(state));
+    // whatever happened while it loaded, show the newest state (a quick job may already be done)
+    toastWin.webContents.once('did-finish-load', () => { toastReady = true; showToast(toastState); });
     return;
   }
+  if (!toastReady) return; // did-finish-load will show the newest state
   const p = lastDrop || screen.getCursorScreenPoint(), wa = screen.getDisplayNearestPoint(p).workArea;
   toastWin.setBounds({ x: Math.round(Math.min(Math.max(p.x - 200, wa.x), wa.x + wa.width - 400)),
     y: Math.round(Math.min(Math.max(p.y - 60, wa.y), wa.y + wa.height - 120)), width: 400, height: 120 });
   toastWin.webContents.send('toast:state', state);
   toastWin.showInactive();
-  clearTimeout(toastTimer);
-  if (state.state !== 'working') toastTimer = setTimeout(() => toastWin.webContents.send('toast:state', { state: 'hide' }), state.state === 'error' ? 5000 : 3200);
+  // success fades after 3 s (like Nashi), errors stay a little longer, and a "working" card
+  // can never hang around forever if a job dies without reporting back
+  const ms = state.state === 'working' ? 120000 : state.state === 'error' ? 6000 : 3000;
+  toastTimer = setTimeout(() => showToast({ state: 'hide' }), ms);
 }
 ipcMain.on('progress', (_e, state) => showToast(state));
 ipcMain.on('notify', (_e, title, file) => showToast({ state: /^(Hata|Error)/.test(title) ? 'error' : 'done', title, file }));
@@ -276,10 +289,8 @@ app.whenReady().then(() => {
       wheelWin.setBounds({ x: wx, y: wy, width: WHEEL, height: WHEEL });
       wheelWin.webContents.send('wheel:show', { cx: WHEEL / 2, cy: WHEEL / 2, winX: wx, winY: wy, glass: snap?.at || 0 });
       wheelWin.showInactive(); shown = true;
-      setTimeout(() => wheelWin.webContents.executeJavaScript(`(() => { openWheel(wheel.cx, wheel.cy, "image"); const st = 2 * Math.PI / 9, a = 6 * st;
-        updateHover(wheel.cx + 140 * Math.sin(a), wheel.cy - 140 * Math.cos(a)); cycleMode();
-        setTimeout(() => { const sa = wheel.sub.a0 + 1.5 * SUB_STEP, r = (RS1 + RS2) / 2; updateHover(wheel.cx + r * Math.sin(sa), wheel.cy - r * Math.cos(sa)); }, 500); })()`), 700);
-      if (process.env.DS_PREVIEW === 'toast') { lastDrop = { x: x + width / 2, y: y + height / 2 + 330 }; setTimeout(() => showToast({ state: 'working', title: 'JPG', sub: 'İşleniyor…' }), 300); setTimeout(() => log('toast bounds', JSON.stringify(toastWin.getBounds()), JSON.stringify(toastWin.getContentBounds())), 1500); }
+      setTimeout(() => wheelWin.webContents.executeJavaScript(`(() => { openWheel(wheel.cx, wheel.cy, 'image', 'tools'); updateHover(wheel.cx + 140 * Math.sin(wheel.step), wheel.cy - 140 * Math.cos(wheel.step)); })()`), 700);
+      if (process.env.DS_PREVIEW === 'toast') { lastDrop = { x: x + width / 2, y: y + height / 2 + 330 }; setTimeout(() => showToast({ state: 'working', title: 'JPG', sub: 'İşleniyor…' }), 300); }
     }, 1200);
   });
   tray = new Tray(trayIcon());

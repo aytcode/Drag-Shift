@@ -18,7 +18,7 @@ jobs:
           - os: windows-latest
             args: --win nsis
           - os: macos-latest
-            args: --mac zip
+            args: --mac zip --arm64 --x64
           - os: ubuntu-latest
             args: --linux AppImage deb
     runs-on: ${{ matrix.os }}
